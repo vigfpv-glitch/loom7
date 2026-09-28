@@ -234,68 +234,118 @@
       border-color: var(--ink);
     }
     .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    .product { min-width: 0; }
-    .product-image { position: relative; aspect-ratio: 4/5; overflow: hidden; background: #e8e5dc; }
-    .product-image img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
-    .product:hover .product-image img { transform: scale(1.04); }
-    .product-info { padding: 13px 2px; display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
-    .product-info span:last-child { white-space: nowrap; }
-    .product-tag { position: absolute; top: 12px; left: 12px; padding: 7px 9px; background: var(--paper); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
-    .add-button { width: 100%; padding: 13px 15px; border: 1px solid var(--ink); background: transparent; color: var(--ink); font-size: 11px; }
+    .product-card { min-width: 0; }
+    .product-image {
+      position: relative;
+      overflow: hidden;
+      background: #e7e6dd;
+      aspect-ratio: 4 / 5;
+    }
+    .product-image img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s; }
+    .product-card:hover .product-image img { transform: scale(1.04); }
+    .product-tag {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 7px 10px;
+      background: var(--paper);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .product-info { padding: 15px 2px 25px; }
+    .product-info h3 { margin: 0 0 7px; font-size: 14px; font-weight: 600; }
+    .product-info p { margin: 0; color: var(--muted); font-size: 12px; }
+    .product-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+    .price { font-size: 13px; font-weight: 700; }
+    .add-button {
+      border: 1px solid var(--ink);
+      background: transparent;
+      color: var(--ink);
+      padding: 9px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
     .add-button:hover { background: var(--ink); color: var(--paper); }
-    .story { padding: 90px 10%; display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; background: #e7e9df; }
-    .story-art { min-height: 330px; display: grid; place-items: center; background: var(--acid); font-size: 180px; font-weight: 900; letter-spacing: -20px; }
-    .story-copy p { max-width: 430px; color: var(--muted); font-size: 15px; line-height: 1.9; }
-    .footer { padding: 38px 5%; display: flex; justify-content: space-between; align-items: center; gap: 25px; border-top: 1px solid var(--line); font-size: 10px; letter-spacing: 1px; }
-    .footer-brand { font-size: 25px; font-weight: 900; letter-spacing: -2px; }
-    .bag-dialog { width: min(440px, calc(100% - 30px)); max-height: 80vh; padding: 0; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
-    .bag-dialog::backdrop { background: #14251db0; }
-    .bag-head { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--line); }
-    .bag-head h2 { margin: 0; font-size: 25px; }
-    .close-bag { border: 0; background: transparent; font-size: 24px; color: var(--ink); }
-    .bag-items { padding: 20px; }
-    .bag-row { display: flex; justify-content: space-between; gap: 15px; padding: 15px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
-    .bag-empty { color: var(--muted); font-size: 13px; }
-    .bag-total { display: flex; justify-content: space-between; padding: 18px 20px; font-weight: 700; }
-    .checkout-note { padding: 0 20px 20px; color: var(--muted); font-size: 11px; line-height: 1.6; }
-    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 50; padding: 14px 18px; background: var(--ink); color: white; font-size: 12px; transform: translateY(100px); opacity: 0; transition: .3s; }
+    .story {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #dce2d3;
+      margin: 35px 5% 85px;
+    }
+    .story-art { min-height: 400px; display: grid; place-items: center; position: relative; overflow: hidden; }
+    .story-art::before { content: "loom7"; position: absolute; color: #c7d0bb; font-weight: 900; font-size: clamp(95px, 17vw, 260px); letter-spacing: -.09em; }
+    .story-art svg { position: relative; width: 70%; filter: drop-shadow(12px 20px 12px #263b252b); }
+    .story-copy { padding: 65px 10%; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+    .story-copy p { color: var(--muted); font-size: 14px; line-height: 1.9; max-width: 400px; }
+    .story-copy .button { margin-top: 15px; }
+    .footer {
+      padding: 36px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--line);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .footer strong { color: var(--ink); }
+    .bag-dialog {
+      width: min(480px, calc(100% - 28px));
+      max-height: min(80vh, 700px);
+      padding: 25px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: 0 20px 80px #0002;
+    }
+    .bag-dialog::backdrop { background: #10181088; }
+    .bag-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+    .bag-heading h2 { margin: 0; font-size: 25px; }
+    .close-bag { border: 0; background: transparent; color: var(--ink); font-size: 24px; }
+    .bag-items { margin: 25px 0; display: grid; gap: 14px; }
+    .bag-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+    .bag-row p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .bag-row button { border: 0; background: transparent; text-decoration: underline; color: var(--muted); font-size: 11px; }
+    .bag-total { display: flex; justify-content: space-between; padding: 15px 0; font-weight: 700; }
+    .empty-bag { color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 50; padding: 14px 18px; background: var(--ink); color: var(--paper); font-size: 12px; transform: translateY(20px); opacity: 0; transition: .25s; pointer-events: none; }
     .toast.show { transform: translateY(0); opacity: 1; }
+
     @media (max-width: 800px) {
       .header { padding: 16px 5%; }
-      .logo img { width: 118px; max-height: 36px; }
-      .nav { gap: 14px; font-size: 11px; }
-      .bag-trigger { padding: 8px 12px; }
+      .nav { gap: 16px; font-size: 11px; }
       .hero { grid-template-columns: 1fr; }
-      .hero-copy { padding: 60px 8%; min-height: 500px; }
-      .hero-art { min-height: 460px; }
-      .hero-art::before { font-size: 90vw; }
-      .ticker { flex-wrap: wrap; justify-content: center; }
-      .products { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; }
-      .story { grid-template-columns: 1fr; gap: 35px; padding: 65px 8%; }
-      .story-art { min-height: 260px; font-size: 140px; }
+      .hero-copy { min-height: 470px; padding: 65px 8%; }
+      .hero-art { min-height: 520px; }
+      .hero-art::before { font-size: 95vw; }
+      .products { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .section-heading { align-items: flex-start; flex-direction: column; }
+      .story { grid-template-columns: 1fr; }
+      .story-art { min-height: 300px; }
+      .story-copy { padding: 45px 8%; }
     }
     @media (max-width: 480px) {
-      .announcement { font-size: 8px; letter-spacing: 1.3px; }
-      .header { gap: 10px; }
-      .nav { gap: 10px; }
-      .nav a { font-size: 10px; }
-      .bag-trigger { font-size: 10px; }
-      .logo img { width: 100px; max-height: 32px; }
-      .section-heading { align-items: flex-start; flex-direction: column; }
-      .filters { gap: 6px; }
-      .filter { padding: 8px 12px; }
-      .footer { flex-wrap: wrap; }
+      .header { flex-wrap: wrap; gap: 14px; }
+      .logo { font-size: 30px; }
+      .nav { order: 3; width: 100%; justify-content: space-between; }
+      .bag-trigger { margin-left: auto; }
+      .hero-copy { min-height: 430px; }
+      .hero-art { min-height: 400px; }
+      .ticker { flex-wrap: wrap; justify-content: center; gap: 10px 20px; text-align: center; }
+      .collection { padding: 60px 5%; }
+      .footer { align-items: flex-start; flex-direction: column; gap: 12px; }
     }
   </style>
 </head>
 <body>
-  <div class="announcement">Free shipping on orders over $75 · Made to move with you</div>
+  <div class="announcement">Free shipping on orders over $75 — made for your everyday</div>
   <header class="header">
-    <a class="logo" href="#top" aria-label="loom7 home"><img src="assets/loom7-logo.png" alt="loom7" /></a>
+    <a class="logo" href="#top" aria-label="loom7 home"><img src="LOOM7_logo_transparent.png" alt="loom7" /></a>
     <nav class="nav" aria-label="Main navigation">
       <a href="#collection">Shop</a>
       <a href="#story">Our story</a>
-      <a href="#footer">Contact</a>
+      <a href="mailto:hello@loom7.example">Contact</a>
     </nav>
     <button class="bag-trigger" id="openBag" type="button" aria-haspopup="dialog">Bag <span class="bag-count" id="bagCount">0</span></button>
   </header>
@@ -303,131 +353,166 @@
   <main id="top">
     <section class="hero" aria-labelledby="heroTitle">
       <div class="hero-copy">
-        <div class="eyebrow">Everyday essentials, reimagined</div>
+        <div class="eyebrow">Independent essentials · Est. 2024</div>
         <h1 id="heroTitle">Wear your<br><em>own rhythm.</em></h1>
-        <p>Thoughtful staples for wherever the day takes you. Easy fits, considered details, and a little room to move.</p>
+        <p>Comfort-first pieces with a little more character. Designed to live in, made to go everywhere.</p>
         <a class="button" href="#collection">Explore the collection <span aria-hidden="true">↗</span></a>
-        <div class="hero-footnote">Designed for the in-between moments · Est. 2024</div>
+        <div class="hero-footnote">Soft by nature. Bold by choice.</div>
       </div>
-      <div class="hero-art" aria-label="Loom7 signature tee illustration">
-        <div class="sticker">MADE TO<br>MOVE<br>WITH YOU</div>
+      <div class="hero-art" aria-label="Illustration of a folded green t-shirt">
+        <div class="sticker">GOOD<br>BY DESIGN</div>
         <div class="hero-shirt" aria-hidden="true">
-          <svg viewBox="0 0 600 570" role="img" aria-label="Illustrated forest-green T-shirt with a cream number seven">
-            <path d="M184 95 259 64h82l75 31 115 55-55 120-62-30v254H186V240l-62 30-55-120z" fill="#315243"/>
-            <path d="M259 64c2 31 13 51 41 51s39-20 41-51" fill="none" stroke="#e6e5d8" stroke-width="12"/>
-            <path d="m280 191 77-8-52 54 25 1-15 16 54 9-4 18-88-14 4-16 36-37-51 5z" fill="#f3f0e8"/>
-            <text x="299" y="355" fill="#f3f0e8" font-size="38" font-family="Arial" font-weight="700" letter-spacing="5">LOOM7</text>
+          <svg viewBox="0 0 520 430" role="img" aria-label="Green t-shirt illustration">
+            <path d="M181 47 115 61 40 105l48 95 62-31v220h220V169l62 31 48-95-75-44-66-14c-8 34-35 58-79 58s-71-24-79-58Z" fill="#576e50"/>
+            <path d="M181 47c8 34 35 58 79 58s71-24 79-58l-42-9c-5 20-18 35-37 38-19-3-32-18-37-38l-42 9Z" fill="#e8eddf" opacity=".7"/>
+            <path d="M150 169h220M150 389h220" stroke="#435b3e" stroke-width="5" opacity=".55"/>
+            <text x="260" y="268" text-anchor="middle" fill="#f3f0e8" font-size="46" font-family="Arial" font-weight="bold" letter-spacing="-4">loom7</text>
+            <text x="260" y="295" text-anchor="middle" fill="#dfff7a" font-size="11" font-family="Arial" letter-spacing="4">OWN YOUR RHYTHM</text>
           </svg>
         </div>
-        <div class="art-label">LOOM7 / DROP 01<br>THE EVERYDAY TEE</div>
+        <div class="art-label">01 / The everyday tee<br>Organic cotton · relaxed fit</div>
       </div>
     </section>
-
-    <div class="ticker" aria-label="Brand values"><span>Better basics</span><span>Made for movement</span><span>Wear on repeat</span></div>
+    <div class="ticker" aria-label="Brand promises"><span>Wear it your way</span><span>Better basics</span><span>Good days, on repeat</span><span>Made to move</span></div>
 
     <section class="collection" id="collection" aria-labelledby="collectionTitle">
       <div class="section-heading">
-        <div><div class="eyebrow">The first collection</div><h2 id="collectionTitle">Good things<br>get worn.</h2></div>
-        <div class="filters" role="group" aria-label="Filter products">
-          <button class="filter" type="button" data-filter="all" aria-pressed="true">All</button>
+        <div><div class="eyebrow">The first drop</div><h2 id="collectionTitle">Pieces with<br>personality.</h2></div>
+        <div class="filters" role="group" aria-label="Filter collection">
+          <button class="filter" type="button" data-filter="all" aria-pressed="true">All pieces</button>
           <button class="filter" type="button" data-filter="daily" aria-pressed="false">Daily</button>
           <button class="filter" type="button" data-filter="offduty" aria-pressed="false">Off-duty</button>
           <button class="filter" type="button" data-filter="weekend" aria-pressed="false">Weekend</button>
+          <button class="filter" type="button" data-filter="afterhours" aria-pressed="false">After hours</button>
         </div>
       </div>
-      <div class="products" id="products" aria-live="polite"></div>
+      <div class="products" id="products">
+        <article class="product-card" data-category="daily">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=85" alt="Relaxed cotton tee" loading="lazy"><span class="product-tag">Bestseller</span></div>
+          <div class="product-info"><h3>Daily Tee</h3><p>Organic cotton · 6 colours</p><div class="product-bottom"><span class="price">$32</span><button class="add-button" type="button" data-add="daily-tee">Add to bag</button></div></div>
+        </article>
+        <article class="product-card" data-category="offduty">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=85" alt="Soft relaxed hoodie" loading="lazy"></div>
+          <div class="product-info"><h3>Off-Duty Hoodie</h3><p>Heavyweight fleece · easy fit</p><div class="product-bottom"><span class="price">$68</span><button class="add-button" type="button" data-add="relaxed-hoodie">Add to bag</button></div></div>
+        </article>
+        <article class="product-card" data-category="weekend">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=900&q=85" alt="Weekend cotton shirt" loading="lazy"><span class="product-tag">New</span></div>
+          <div class="product-info"><h3>Weekend Shirt</h3><p>Brushed cotton · relaxed cut</p><div class="product-bottom"><span class="price">$54</span><button class="add-button" type="button" data-add="weekend-shirt">Add to bag</button></div></div>
+        </article>
+        <article class="product-card" data-category="afterhours">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=85" alt="Lightweight after-hours layer" loading="lazy"></div>
+          <div class="product-info"><h3>After Hours</h3><p>Lightweight layer · all plans</p><div class="product-bottom"><span class="price">$48</span><button class="add-button" type="button" data-add="after-hours">Add to bag</button></div></div>
+        </article>
+      </div>
     </section>
 
     <section class="story" id="story" aria-labelledby="storyTitle">
-      <div class="story-art" aria-hidden="true">7</div>
-      <div class="story-copy">
-        <div class="eyebrow">A little more considered</div>
-        <h2 id="storyTitle">Clothes for the<br>life you actually live.</h2>
-        <p>We started loom7 with a simple thought: the pieces you reach for most should feel like you. So we focus on clean lines, easy layers, and details that make the everyday a little better.</p>
-        <p>No fuss. No noise. Just good things, made to move with you.</p>
+      <div class="story-art" aria-hidden="true">
+        <svg viewBox="0 0 520 430">
+          <path d="M181 47 115 61 40 105l48 95 62-31v220h220V169l62 31 48-95-75-44-66-14c-8 34-35 58-79 58s-71-24-79-58Z" fill="#576e50"/>
+          <path d="M181 47c8 34 35 58 79 58s71-24 79-58l-42-9c-5 20-18 35-37 38-19-3-32-18-37-38l-42 9Z" fill="#e8eddf" opacity=".7"/>
+          <path d="M150 169h220M150 389h220" stroke="#435b3e" stroke-width="5" opacity=".55"/>
+          <text x="260" y="268" text-anchor="middle" fill="#f3f0e8" font-size="46" font-family="Arial" font-weight="bold" letter-spacing="-4">loom7</text>
+          <text x="260" y="295" text-anchor="middle" fill="#dfff7a" font-size="11" font-family="Arial" letter-spacing="4">OWN YOUR RHYTHM</text>
+        </svg>
       </div>
+      <div class="story-copy"><div class="eyebrow">A little less ordinary</div><h2 id="storyTitle">Everyday,<br>reimagined.</h2><p>loom7 started with one idea: the pieces you reach for most should feel like the best ones you own. Thoughtful fits, softer fabrics, and details that feel like you.</p><a class="button" href="#collection">Find your fit <span aria-hidden="true">↗</span></a></div>
     </section>
   </main>
 
-  <footer class="footer" id="footer"><span class="footer-brand">loom7</span><span>© <span id="year"></span> LOOM7 · Wear your own rhythm.</span><a href="mailto:hello@loom7.example">hello@loom7.example</a></footer>
-
+  <footer class="footer"><span>© <span id="year"></span> <strong>loom7</strong> · Wear your own rhythm.</span><a href="mailto:hello@loom7.example">hello@loom7.example</a></footer>
   <dialog class="bag-dialog" id="bagDialog" aria-labelledby="bagTitle">
-    <div class="bag-head"><h2 id="bagTitle">Your bag</h2><button class="close-bag" id="closeBag" type="button" aria-label="Close bag">×</button></div>
+    <div class="bag-heading"><h2 id="bagTitle">Your bag</h2><button class="close-bag" id="closeBag" type="button" aria-label="Close bag">×</button></div>
     <div class="bag-items" id="bagItems"></div>
-    <div class="bag-total"><span>Total</span><span id="bagTotal">$0.00</span></div>
-    <p class="checkout-note">This demo storefront is a design preview. Checkout is not enabled yet.</p>
+    <div class="bag-total" id="bagTotal" hidden><span>Total</span><span id="totalValue"></span></div>
+    <p class="empty-bag" id="emptyBag">Your bag is waiting for something good. Add a piece you love to get started.</p>
   </dialog>
-
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const products = [
-      { id: 'daily-tee', name: 'The Everyday Tee', price: 38, tag: 'BESTSELLER', category: 'daily', color: 'Forest', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=85' },
-      { id: 'relaxed-hoodie', name: 'The Off-Duty Hoodie', price: 74, tag: 'SOFT LAYER', category: 'offduty', color: 'Oat', image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=85' },
-      { id: 'weekend-shirt', name: 'The Weekend Shirt', price: 58, tag: 'EASY FIT', category: 'weekend', color: 'Stone', image: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=900&q=85' },
-      { id: 'after-hours', name: 'The After Hours Tee', price: 42, tag: 'NEW', category: 'daily', color: 'Ink', image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=85' },
+    const catalogue = [
+      { id: 'daily-tee', name: 'Daily Tee', price: 32 },
+      { id: 'relaxed-hoodie', name: 'Off-Duty Hoodie', price: 68 },
+      { id: 'weekend-shirt', name: 'Weekend Shirt', price: 54 },
+      { id: 'after-hours', name: 'After Hours', price: 48 }
     ];
-
-    const cart = new Map();
-    const productsEl = document.getElementById('products');
-    const bagCountEl = document.getElementById('bagCount');
+    const bag = new Map();
+    const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+    const openBagButton = document.getElementById('openBag');
     const bagDialog = document.getElementById('bagDialog');
-    const bagItemsEl = document.getElementById('bagItems');
-    const bagTotalEl = document.getElementById('bagTotal');
+    const bagCount = document.getElementById('bagCount');
+    const bagItems = document.getElementById('bagItems');
+    const bagTotal = document.getElementById('bagTotal');
+    const totalValue = document.getElementById('totalValue');
+    const emptyBag = document.getElementById('emptyBag');
     const toast = document.getElementById('toast');
     let toastTimer;
 
-    function renderProducts(filter = 'all') {
-      const visibleProducts = products.filter(product => filter === 'all' || product.category === filter);
-      productsEl.innerHTML = visibleProducts.map(product => `
-        <article class="product">
-          <div class="product-image"><img src="${product.image}" alt="${product.name} in ${product.color}" loading="lazy"><span class="product-tag">${product.tag}</span></div>
-          <div class="product-info"><span>${product.name}</span><span>$${product.price.toFixed(2)}</span></div>
-          <button class="add-button" type="button" data-add="${product.id}">Add to bag</button>
-        </article>
-      `).join('');
-    }
-
     function renderBag() {
-      const items = [...cart.values()];
-      const count = items.reduce((sum, item) => sum + item.quantity, 0);
-      const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      bagCountEl.textContent = count;
-      bagItemsEl.innerHTML = items.length
-        ? items.map(item => `<div class="bag-row"><span>${item.name} × ${item.quantity}</span><span>$${(item.price * item.quantity).toFixed(2)}</span></div>`).join('')
-        : '<p class="bag-empty">Your bag is taking a breather. Add something you love.</p>';
-      bagTotalEl.textContent = `$${total.toFixed(2)}`;
+      const count = [...bag.values()].reduce((sum, quantity) => sum + quantity, 0);
+      bagCount.textContent = count;
+      bagItems.replaceChildren();
+      emptyBag.hidden = count > 0;
+      bagTotal.hidden = count === 0;
+      let total = 0;
+
+      for (const [id, quantity] of bag) {
+        const product = catalogue.find(item => item.id === id);
+        if (!product) continue;
+        total += product.price * quantity;
+        const row = document.createElement('div');
+        row.className = 'bag-row';
+        const details = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = product.name;
+        const quantityText = document.createElement('p');
+        quantityText.textContent = `Quantity: ${quantity}`;
+        details.append(name, quantityText);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.dataset.remove = id;
+        remove.textContent = 'Remove';
+        row.append(details, remove);
+        bagItems.append(row);
+      }
+      totalValue.textContent = money.format(total);
     }
 
-    document.querySelectorAll('.filter').forEach(button => {
+    document.querySelectorAll('[data-filter]').forEach(button => {
       button.addEventListener('click', () => {
-        document.querySelectorAll('.filter').forEach(filter => filter.setAttribute('aria-pressed', 'false'));
-        button.setAttribute('aria-pressed', 'true');
-        renderProducts(button.dataset.filter);
+        const filter = button.dataset.filter;
+        document.querySelectorAll('[data-filter]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+        document.querySelectorAll('.product-card').forEach(card => {
+          card.hidden = filter !== 'all' && card.dataset.category !== filter;
+        });
       });
     });
 
-    productsEl.addEventListener('click', event => {
-      const button = event.target.closest('[data-add]');
-      if (!button) return;
-      const product = products.find(item => item.id === button.dataset.add);
-      const existing = cart.get(product.id);
-      cart.set(product.id, { ...product, quantity: (existing?.quantity || 0) + 1 });
-      renderBag();
-      toast.textContent = `${product.name} added to your bag`;
-      toast.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    document.addEventListener('click', event => {
+      const addButton = event.target.closest('[data-add]');
+      if (addButton) {
+        const id = addButton.dataset.add;
+        bag.set(id, (bag.get(id) || 0) + 1);
+        renderBag();
+        toast.textContent = `${catalogue.find(item => item.id === id).name} added to your bag`;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+      }
+
+      const removeButton = event.target.closest('[data-remove]');
+      if (removeButton) {
+        bag.delete(removeButton.dataset.remove);
+        renderBag();
+      }
     });
 
-    document.getElementById('openBag').addEventListener('click', () => bagDialog.showModal());
+    openBagButton.addEventListener('click', () => bagDialog.showModal());
     document.getElementById('closeBag').addEventListener('click', () => bagDialog.close());
     bagDialog.addEventListener('click', event => {
       if (event.target === bagDialog) bagDialog.close();
     });
-
     document.getElementById('year').textContent = new Date().getFullYear();
-    renderProducts();
     renderBag();
   </script>
 </body>

@@ -51,12 +51,18 @@
       border-bottom: 1px solid var(--line);
     }
     .logo {
-      font-size: 35px;
-      font-weight: 900;
-      letter-spacing: -3px;
+      display: inline-flex;
+      align-items: center;
       line-height: 1;
     }
-    .logo span { display: inline-block; transform: rotate(-12deg); }
+    .logo img {
+      display: block;
+      width: 140px;
+      max-height: 42px;
+      object-fit: contain;
+      object-position: left center;
+      filter: brightness(0);
+    }
     .nav { display: flex; gap: 32px; font-size: 13px; }
     .nav a:hover { text-decoration: underline; text-underline-offset: 6px; }
     .bag-trigger {
@@ -227,435 +233,287 @@
       color: var(--paper);
       border-color: var(--ink);
     }
-    .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .product-card { min-width: 0; }
     .product-image {
       position: relative;
-      aspect-ratio: 4 / 5;
-      display: grid;
-      place-items: center;
       overflow: hidden;
-      background: var(--surface);
+      background: #e7e6dd;
+      aspect-ratio: 4 / 5;
     }
-    .product-image svg { width: 100%; transition: transform .35s; }
-    .product:hover .product-image svg { transform: scale(1.045) rotate(-3deg); }
-    .product-label {
+    .product-image img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s; }
+    .product-card:hover .product-image img { transform: scale(1.04); }
+    .product-tag {
       position: absolute;
-      top: 14px;
-      left: 14px;
-      z-index: 1;
-      font-size: 8px;
-      letter-spacing: 1.2px;
+      top: 12px;
+      left: 12px;
+      padding: 7px 10px;
+      background: var(--paper);
+      font-size: 9px;
       text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    .product-info { padding-top: 18px; }
-    .product-title { font-size: 14px; font-weight: 500; margin: 0; }
-    .product-meta { font-size: 11px; color: var(--muted); margin: 8px 0 16px; }
-    .product-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .price-note { color: var(--muted); font-size: 10px; }
+    .product-info { padding: 15px 2px 25px; }
+    .product-info h3 { margin: 0 0 7px; font-size: 14px; font-weight: 600; }
+    .product-info p { margin: 0; color: var(--muted); font-size: 12px; }
+    .product-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+    .price { font-size: 13px; font-weight: 700; }
     .add-button {
+      border: 1px solid var(--ink);
       background: transparent;
       color: var(--ink);
-      border: 0;
-      border-bottom: 1px solid var(--ink);
-      padding: 7px 0;
-      font-size: 11px;
+      padding: 9px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
+    .add-button:hover { background: var(--ink); color: var(--paper); }
     .story {
-      margin: 0 5% 85px;
-      padding: 65px;
-      background: var(--ink);
-      color: var(--paper);
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 70px;
-      align-items: center;
+      grid-template-columns: 1fr 1fr;
+      background: #dce2d3;
+      margin: 35px 5% 85px;
     }
-    .story h2 { font-size: clamp(40px, 5vw, 72px); }
-    .story h2 em { font-family: Georgia, serif; color: var(--acid); font-weight: 400; }
-    .story p { color: #c3cdc4; font-size: 14px; line-height: 1.9; }
-    .story-mark { margin-top: 24px; color: var(--acid); font-size: 12px; letter-spacing: 3px; }
-    footer { padding: 0 5% 28px; }
-    .footer-top { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 36px; }
-    .footer-wordmark { font-size: clamp(70px, 15vw, 190px); font-weight: 900; letter-spacing: -.09em; line-height: .8; }
-    .footer-top p { font-family: Georgia, serif; font-size: 22px; font-style: italic; }
-    .footer-bottom {
-      border-top: 1px solid var(--line);
-      padding-top: 23px;
+    .story-art { min-height: 400px; display: grid; place-items: center; position: relative; overflow: hidden; }
+    .story-art::before { content: "loom7"; position: absolute; color: #c7d0bb; font-weight: 900; font-size: clamp(95px, 17vw, 260px); letter-spacing: -.09em; }
+    .story-art svg { position: relative; width: 70%; filter: drop-shadow(12px 20px 12px #263b252b); }
+    .story-copy { padding: 65px 10%; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+    .story-copy p { color: var(--muted); font-size: 14px; line-height: 1.9; max-width: 400px; }
+    .story-copy .button { margin-top: 15px; }
+    .footer {
+      padding: 36px 5%;
       display: flex;
       justify-content: space-between;
-      gap: 20px;
-      font-size: 10px;
+      align-items: center;
+      border-top: 1px solid var(--line);
+      font-size: 11px;
       color: var(--muted);
     }
-    dialog {
-      position: fixed;
-      inset: 0 0 0 auto;
-      width: min(460px, 100%);
-      max-width: 100%;
-      height: 100dvh;
-      max-height: 100dvh;
-      margin: 0;
-      border: 0;
-      padding: 28px;
+    .footer strong { color: var(--ink); }
+    .bag-dialog {
+      width: min(480px, calc(100% - 28px));
+      max-height: min(80vh, 700px);
+      padding: 25px;
+      border: 1px solid var(--line);
       background: var(--paper);
       color: var(--ink);
+      box-shadow: 0 20px 80px #0002;
     }
-    dialog::backdrop { background: #10271fc2; }
-    .drawer-header { display: flex; align-items: center; justify-content: space-between; }
-    .drawer-header h2 { font-size: 32px; margin: 0; }
-    .close-button { background: none; border: 0; color: var(--ink); font-size: 30px; padding: 5px 10px; }
-    .bag-items { padding: 25px 0; }
-    .bag-item { display: flex; gap: 15px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line); }
-    .bag-thumbnail { width: 82px; flex-shrink: 0; background: #e1e5d9; }
-    .bag-thumbnail svg { width: 100%; display: block; }
-    .bag-details { flex: 1; }
-    .bag-details h3 { font-size: 13px; margin: 0 0 9px; }
-    .quantity-controls { display: flex; align-items: center; gap: 12px; font-size: 12px; }
-    .quantity-controls button { width: 28px; height: 28px; background: transparent; border: 1px solid var(--line); color: var(--ink); }
-    .remove-button { background: none; border: 0; color: var(--muted); font-size: 10px; padding: 8px 0; text-decoration: underline; }
-    .preview-note { font-size: 12px; line-height: 1.7; color: var(--muted); }
-    .checkout { width: 100%; justify-content: center; margin-top: 15px; }
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translate(-50%, 20px);
-      opacity: 0;
-      pointer-events: none;
-      z-index: 30;
-      background: var(--ink);
-      color: var(--paper);
-      padding: 15px 24px;
-      border-radius: 3px;
-      font-size: 12px;
-      transition: .2s;
-      text-align: center;
-      width: max-content;
-      max-width: 90%;
-    }
-    .toast.visible { opacity: 1; transform: translate(-50%, 0); }
+    .bag-dialog::backdrop { background: #10181088; }
+    .bag-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+    .bag-heading h2 { margin: 0; font-size: 25px; }
+    .close-bag { border: 0; background: transparent; color: var(--ink); font-size: 24px; }
+    .bag-items { margin: 25px 0; display: grid; gap: 14px; }
+    .bag-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+    .bag-row p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .bag-row button { border: 0; background: transparent; text-decoration: underline; color: var(--muted); font-size: 11px; }
+    .bag-total { display: flex; justify-content: space-between; padding: 15px 0; font-weight: 700; }
+    .empty-bag { color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 50; padding: 14px 18px; background: var(--ink); color: var(--paper); font-size: 12px; transform: translateY(20px); opacity: 0; transition: .25s; pointer-events: none; }
+    .toast.show { transform: translateY(0); opacity: 1; }
 
-@media (min-width: 1500px) {
-      main, footer { max-width: 1600px; margin-inline: auto; }
-    }
-    @media (max-width: 950px) {
-      .hero { min-height: 540px; }
-      .hero-copy { padding-top: 45px; padding-bottom: 40px; }
-      .hero-art { min-height: 490px; }
-      .products { grid-template-columns: repeat(2, 1fr); gap: 30px 18px; }
-      .section-heading { align-items: flex-start; flex-direction: column; }
-      .story { padding: 40px; gap: 35px; }
-      .ticker { font-size: 9px; letter-spacing: 1px; }
-    }
-    @media (max-width: 600px) {
-      .announcement { font-size: 8px; letter-spacing: 1.2px; }
+    @media (max-width: 800px) {
       .header { padding: 16px 5%; }
-      .logo { font-size: 30px; }
-      .nav { gap: 15px; font-size: 11px; }
-      .bag-trigger { padding: 7px 10px; font-size: 10px; }
-      .bag-count { margin-left: 3px; }
+      .nav { gap: 16px; font-size: 11px; }
       .hero { grid-template-columns: 1fr; }
-      .hero-copy { padding: 45px 6%; }
-      h1 { font-size: clamp(68px, 16vw, 94px); }
-      .hero-footnote { margin-top: 30px; }
-      .hero-art { min-height: 400px; }
-      .hero-art::before { font-size: 550px; }
-      .hero-shirt { width: 85%; max-width: 390px; }
-      .sticker { width: 80px; height: 80px; font-size: 9px; }
-      .ticker span:nth-child(3) { display: none; }
-      .collection { padding-block: 55px; }
-      .product-title { font-size: 12px; }
-      .product-bottom { align-items: flex-start; flex-direction: column; }
-      .story { grid-template-columns: 1fr; padding: 35px 25px; margin-bottom: 55px; gap: 20px; }
-      .footer-top { align-items: flex-start; gap: 24px; flex-direction: column; }
-      .footer-top p { font-size: 18px; margin: 0; }
-      .footer-bottom { flex-direction: column; gap: 10px; }
+      .hero-copy { min-height: 470px; padding: 65px 8%; }
+      .hero-art { min-height: 520px; }
+      .hero-art::before { font-size: 95vw; }
+      .products { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .section-heading { align-items: flex-start; flex-direction: column; }
+      .story { grid-template-columns: 1fr; }
+      .story-art { min-height: 300px; }
+      .story-copy { padding: 45px 8%; }
     }
-    @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
-      *, *::before, *::after { transition: none !important; }
+    @media (max-width: 480px) {
+      .header { flex-wrap: wrap; gap: 14px; }
+      .logo { font-size: 30px; }
+      .nav { order: 3; width: 100%; justify-content: space-between; }
+      .bag-trigger { margin-left: auto; }
+      .hero-copy { min-height: 430px; }
+      .hero-art { min-height: 400px; }
+      .ticker { flex-wrap: wrap; justify-content: center; gap: 10px 20px; text-align: center; }
+      .collection { padding: 60px 5%; }
+      .footer { align-items: flex-start; flex-direction: column; gap: 12px; }
     }
   </style>
 </head>
 <body>
-  <div class="announcement">Independent spirit. Everyday expression. This is loom7.</div>
-
-<header class="header">
-    <a class="logo" href="#" aria-label="loom7 home">loom<span>7</span></a>
+  <div class="announcement">Free shipping on orders over $75 — made for your everyday</div>
+  <header class="header">
+    <a class="logo" href="#top" aria-label="loom7 home"><img src="https://raw.githubusercontent.com/vigfpv-glitch/loom7/main/LOOM7_logo_transparent.png" alt="loom7" /></a>
     <nav class="nav" aria-label="Main navigation">
-      <a href="#collection">Collection</a>
+      <a href="#collection">Shop</a>
       <a href="#story">Our story</a>
+      <a href="mailto:hello@loom7.example">Contact</a>
     </nav>
-    <button class="bag-trigger" id="openBag" aria-haspopup="dialog">
-      Bag <span class="bag-count" id="bagCount">0</span>
-    </button>
+    <button class="bag-trigger" id="openBag" type="button" aria-haspopup="dialog">Bag <span class="bag-count" id="bagCount">0</span></button>
   </header>
 
-<main>
+  <main id="top">
     <section class="hero" aria-labelledby="heroTitle">
       <div class="hero-copy">
-        <div class="eyebrow">The everyday uniform, reimagined</div>
-        <h1 id="heroTitle">Wear your<br>own <em>rhythm.</em></h1>
-        <p>Less noise. More you. Meet a new perspective on everyday clothing—made for your kind of living.</p>
+        <div class="eyebrow">Independent essentials · Est. 2024</div>
+        <h1 id="heroTitle">Wear your<br><em>own rhythm.</em></h1>
+        <p>Comfort-first pieces with a little more character. Designed to live in, made to go everywhere.</p>
         <a class="button" href="#collection">Explore the collection <span aria-hidden="true">↗</span></a>
-        <div class="hero-footnote">Off-duty energy. On your terms.</div>
+        <div class="hero-footnote">Soft by nature. Bold by choice.</div>
       </div>
-      <div class="hero-art">
-        <div class="hero-shirt" id="heroShirt" role="img" aria-label="Illustration of a forest-green loom7 oversized T-shirt"></div>
-        <div class="sticker" aria-hidden="true">NOT A TREND.<br>A STATE<br>OF MIND.</div>
-        <div class="art-label">THE LOOM7 EDIT<br>001 — EVERYDAY EXPRESSION</div>
+      <div class="hero-art" aria-label="Illustration of a folded green t-shirt">
+        <div class="sticker">GOOD<br>BY DESIGN</div>
+        <div class="hero-shirt" aria-hidden="true">
+          <svg viewBox="0 0 520 430" role="img" aria-label="Green t-shirt illustration">
+            <path d="M181 47 115 61 40 105l48 95 62-31v220h220V169l62 31 48-95-75-44-66-14c-8 34-35 58-79 58s-71-24-79-58Z" fill="#576e50"/>
+            <path d="M181 47c8 34 35 58 79 58s71-24 79-58l-42-9c-5 20-18 35-37 38-19-3-32-18-37-38l-42 9Z" fill="#e8eddf" opacity=".7"/>
+            <path d="M150 169h220M150 389h220" stroke="#435b3e" stroke-width="5" opacity=".55"/>
+            <text x="260" y="268" text-anchor="middle" fill="#f3f0e8" font-size="46" font-family="Arial" font-weight="bold" letter-spacing="-4">loom7</text>
+            <text x="260" y="295" text-anchor="middle" fill="#dfff7a" font-size="11" font-family="Arial" letter-spacing="4">OWN YOUR RHYTHM</text>
+          </svg>
+        </div>
+        <div class="art-label">01 / The everyday tee<br>Organic cotton · relaxed fit</div>
       </div>
     </section>
+    <div class="ticker" aria-label="Brand promises"><span>Wear it your way</span><span>Better basics</span><span>Good days, on repeat</span><span>Made to move</span></div>
 
-<div class="ticker" aria-label="Brand philosophy">
-      <span>Wear. Repeat. Make it yours.</span>
-      <span aria-hidden="true">✳</span>
-      <span>Ordinary days. Unordinary energy.</span>
-      <span aria-hidden="true">✳</span>
-      <span>Find your own rhythm.</span>
-    </div>
-
-<section class="collection" id="collection" aria-labelledby="collectionTitle">
+    <section class="collection" id="collection" aria-labelledby="collectionTitle">
       <div class="section-heading">
-        <div>
-          <div class="eyebrow">The collection / 4 pieces</div>
-          <h2 id="collectionTitle">Your everyday rotation.</h2>
-        </div>
+        <div><div class="eyebrow">The first drop</div><h2 id="collectionTitle">Pieces with<br>personality.</h2></div>
         <div class="filters" role="group" aria-label="Filter collection">
-          <button class="filter" data-filter="all" aria-pressed="true">All pieces</button>
-          <button class="filter" data-filter="tees" aria-pressed="false">Tees</button>
-          <button class="filter" data-filter="layers" aria-pressed="false">Layers</button>
+          <button class="filter" type="button" data-filter="all" aria-pressed="true">All pieces</button>
+          <button class="filter" type="button" data-filter="daily" aria-pressed="false">Daily</button>
+          <button class="filter" type="button" data-filter="offduty" aria-pressed="false">Off-duty</button>
+          <button class="filter" type="button" data-filter="weekend" aria-pressed="false">Weekend</button>
+          <button class="filter" type="button" data-filter="afterhours" aria-pressed="false">After hours</button>
         </div>
       </div>
-      <div class="products" id="products"></div>
+      <div class="products" id="products">
+        <article class="product-card" data-category="daily">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=85" alt="Relaxed cotton tee" loading="lazy"><span class="product-tag">Bestseller</span></div>
+          <div class="product-info"><h3>Daily Tee</h3><p>Organic cotton · 6 colours</p><div class="product-bottom"><span class="price">$32</span><button class="add-button" type="button" data-add="daily-tee">Add to bag</button></div></div>
+        </article>
+        <article class="product-card" data-category="offduty">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=85" alt="Soft relaxed hoodie" loading="lazy"></div>
+          <div class="product-info"><h3>Off-Duty Hoodie</h3><p>Heavyweight fleece · easy fit</p><div class="product-bottom"><span class="price">$68</span><button class="add-button" type="button" data-add="relaxed-hoodie">Add to bag</button></div></div>
+        </article>
+        <article class="product-card" data-category="weekend">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=900&q=85" alt="Weekend cotton shirt" loading="lazy"><span class="product-tag">New</span></div>
+          <div class="product-info"><h3>Weekend Shirt</h3><p>Brushed cotton · relaxed cut</p><div class="product-bottom"><span class="price">$54</span><button class="add-button" type="button" data-add="weekend-shirt">Add to bag</button></div></div>
+        </article>
+        <article class="product-card" data-category="afterhours">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=85" alt="Lightweight after-hours layer" loading="lazy"></div>
+          <div class="product-info"><h3>After Hours</h3><p>Lightweight layer · all plans</p><div class="product-bottom"><span class="price">$48</span><button class="add-button" type="button" data-add="after-hours">Add to bag</button></div></div>
+        </article>
+      </div>
     </section>
 
-<section class="story" id="story" aria-labelledby="storyTitle">
-      <div>
-        <div class="eyebrow">The loom7 point of view</div>
-        <h2 id="storyTitle">Clothes don't<br>define you.<br><em>You do.</em></h2>
+    <section class="story" id="story" aria-labelledby="storyTitle">
+      <div class="story-art" aria-hidden="true">
+        <svg viewBox="0 0 520 430">
+          <path d="M181 47 115 61 40 105l48 95 62-31v220h220V169l62 31 48-95-75-44-66-14c-8 34-35 58-79 58s-71-24-79-58Z" fill="#576e50"/>
+          <path d="M181 47c8 34 35 58 79 58s71-24 79-58l-42-9c-5 20-18 35-37 38-19-3-32-18-37-38l-42 9Z" fill="#e8eddf" opacity=".7"/>
+          <path d="M150 169h220M150 389h220" stroke="#435b3e" stroke-width="5" opacity=".55"/>
+          <text x="260" y="268" text-anchor="middle" fill="#f3f0e8" font-size="46" font-family="Arial" font-weight="bold" letter-spacing="-4">loom7</text>
+          <text x="260" y="295" text-anchor="middle" fill="#dfff7a" font-size="11" font-family="Arial" letter-spacing="4">OWN YOUR RHYTHM</text>
+        </svg>
       </div>
-      <div>
-        <p>We're here for the in-between moments. The slow mornings, the spontaneous plans, the long way home.</p>
-        <p>Our vision is simple: an everyday wardrobe with room for individuality. Familiar shapes. A fresh perspective. Nothing to prove.</p>
-        <div class="story-mark">SEVEN DAYS. YOUR WAY.</div>
-      </div>
+      <div class="story-copy"><div class="eyebrow">A little less ordinary</div><h2 id="storyTitle">Everyday,<br>reimagined.</h2><p>loom7 started with one idea: the pieces you reach for most should feel like the best ones you own. Thoughtful fits, softer fabrics, and details that feel like you.</p><a class="button" href="#collection">Find your fit <span aria-hidden="true">↗</span></a></div>
     </section>
   </main>
 
-<footer>
-    <div class="footer-top">
-      <a class="footer-wordmark" href="#" aria-label="loom7 home">loom7</a>
-      <p>A little less ordinary.</p>
-    </div>
-    <div class="footer-bottom">
-      <span>© <span id="year"></span> loom7</span>
-      <span>Collection preview · Sample designs · Checkout not enabled</span>
-      <a href="#collection">Back to the collection ↗</a>
-    </div>
-  </footer>
-
-<dialog id="bagDialog" aria-labelledby="bagTitle">
-    <div class="drawer-header">
-      <h2 id="bagTitle">Your bag.</h2>
-      <button class="close-button" id="closeBag" aria-label="Close shopping bag">×</button>
-    </div>
+  <footer class="footer"><span>© <span id="year"></span> <strong>loom7</strong> · Wear your own rhythm.</span><a href="mailto:hello@loom7.example">hello@loom7.example</a></footer>
+  <dialog class="bag-dialog" id="bagDialog" aria-labelledby="bagTitle">
+    <div class="bag-heading"><h2 id="bagTitle">Your bag</h2><button class="close-bag" id="closeBag" type="button" aria-label="Close bag">×</button></div>
     <div class="bag-items" id="bagItems"></div>
-    <p class="preview-note">You're exploring a sample collection. Final product details, sizing, pricing, and payment will be available when the store launches.</p>
-    <button class="button checkout" disabled>Checkout coming soon</button>
+    <div class="bag-total" id="bagTotal" hidden><span>Total</span><span id="totalValue"></span></div>
+    <p class="empty-bag" id="emptyBag">Your bag is waiting for something good. Add a piece you love to get started.</p>
   </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-<script>
-    // Sample catalog: replace with your real products before launching.
-    const catalog = [
-      { id: "daily", name: "The Daily Tee", color: "Forest", type: "tees", fill: "#294c3b", print: "#e2ebc9", surface: "#e0e5d8", label: "The signature" },
-      { id: "offduty", name: "The Off-Duty Tee", color: "Chalk", type: "tees", fill: "#eee9da", print: "#294334", surface: "#e8e3d9", label: "Keep it simple" },
-      { id: "weekend", name: "The Weekend Crew", color: "Clay", type: "layers", fill: "#9d5941", print: "#f4e8d6", surface: "#e8dbcf", label: "Slow-day energy" },
-      { id: "afterhours", name: "The After Hours Tee", color: "Ink", type: "tees", fill: "#30332f", print: "#dfff7a", surface: "#dfe1db", label: "After the everyday" }
+  <script>
+    const catalogue = [
+      { id: 'daily-tee', name: 'Daily Tee', price: 32 },
+      { id: 'relaxed-hoodie', name: 'Off-Duty Hoodie', price: 68 },
+      { id: 'weekend-shirt', name: 'Weekend Shirt', price: 54 },
+      { id: 'after-hours', name: 'After Hours', price: 48 }
     ];
-
-// Original inline illustrations: no external images or libraries required.
-    let illustrationId = 0;
-    function garment(product) {
-      const uid = `fabric-${illustrationId++}`;
-      const long = product.type === "layers";
-      const shape = long
-        ? "M139 95 L88 117 L37 289 L86 310 L139 200 L132 351 Q220 364 308 351 L301 200 L354 310 L403 289 L352 117 L301 95 L261 80 Q220 111 179 80 Z"
-        : "M139 95 L87 118 L44 196 L106 230 L139 180 L132 351 Q220 364 308 351 L301 180 L334 230 L396 196 L353 118 L301 95 L261 80 Q220 111 179 80 Z";
-
-return `<svg viewBox="0 0 440 440" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="${uid}" x1="0" x2="1" y1="0" y2=".8">
-            <stop offset="0" stop-color="#fff" stop-opacity=".13"/>
-            <stop offset=".45" stop-color="#fff" stop-opacity="0"/>
-            <stop offset="1" stop-color="#000" stop-opacity=".18"/>
-          </linearGradient>
-        </defs>
-        <ellipse cx="220" cy="379" rx="103" ry="11" fill="#000" opacity=".055"/>
-        <path d="${shape}" fill="${product.fill}" stroke="#000" stroke-opacity=".12" stroke-width="2"/>
-        <path d="${shape}" fill="url(#${uid})"/>
-        <path d="M179 81 Q220 133 261 81 L251 77 Q220 102 189 77 Z" fill="#000" opacity=".21"/>
-        <path d="M180 86 Q220 131 260 86" fill="none" stroke="${product.print}" stroke-opacity=".19" stroke-width="2"/>
-        <path d="M143 143 Q158 227 147 332 M297 143 Q282 227 294 332" fill="none" stroke="#000" stroke-opacity=".075" stroke-width="3"/>
-        <path d="M139 340 Q220 352 301 340" fill="none" stroke="${product.print}" stroke-opacity=".2"/>
-        <path d="M149 123 L163 170 M290 123 L277 173" stroke="#fff" stroke-opacity=".065" stroke-width="4"/>
-        <text x="220" y="202" text-anchor="middle" fill="${product.print}" font-family="Arial, sans-serif" font-weight="900" font-size="35" letter-spacing="-2">loom7</text>
-        <text x="220" y="219" text-anchor="middle" fill="${product.print}" font-family="Arial, sans-serif" font-size="5.5" letter-spacing="2.4">FIND YOUR OWN RHYTHM</text>
-        ${long ? `<path d="M134 338 Q220 352 306 338 L308 351 Q220 364 132 351Z" fill="#000" opacity=".13"/>` : ""}
-        <rect x="290" y="326" width="10" height="17" rx="1" fill="${product.print}" opacity=".8"/>
-        <text x="295" y="338" text-anchor="middle" font-family="Arial" font-size="8" fill="${product.fill}">7</text>
-      </svg>`;
-    }
-
-let bag = {};
-    try {
-      const saved = JSON.parse(localStorage.getItem("loom7-bag") || "{}");
-      if (saved && typeof saved === "object") {
-        catalog.forEach(product => {
-          const quantity = saved[product.id];
-          if (Number.isInteger(quantity) && quantity > 0) {
-            bag[product.id] = Math.min(quantity, 99);
-          }
-        });
-      }
-    } catch {
-      // The store also works when browser storage is unavailable.
-    }
-
-const products = document.getElementById("products");
-    const dialog = document.getElementById("bagDialog");
+    const bag = new Map();
+    const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+    const openBagButton = document.getElementById('openBag');
+    const bagDialog = document.getElementById('bagDialog');
+    const bagCount = document.getElementById('bagCount');
+    const bagItems = document.getElementById('bagItems');
+    const bagTotal = document.getElementById('bagTotal');
+    const totalValue = document.getElementById('totalValue');
+    const emptyBag = document.getElementById('emptyBag');
+    const toast = document.getElementById('toast');
     let toastTimer;
 
-function renderProducts(filter = "all") {
-      products.innerHTML = catalog
-        .filter(product => filter === "all" || product.type === filter)
-        .map(product => `
-          <article class="product">
-            <div class="product-image" style="--surface:${product.surface}" role="img" aria-label="${product.color} ${product.name} illustration">
-              <span class="product-label">${product.label}</span>
-              ${garment(product)}
-            </div>
-            <div class="product-info">
-              <h3 class="product-title">${product.name}</h3>
-              <p class="product-meta">${product.color} / Sample design</p>
-              <div class="product-bottom">
-                <span class="price-note">Pricing coming soon</span>
-                <button class="add-button" data-add="${product.id}" aria-label="Add ${product.name} to bag">Add to bag +</button>
-              </div>
-            </div>
-          </article>
-        `).join("");
-    }
+    function renderBag() {
+      const count = [...bag.values()].reduce((sum, quantity) => sum + quantity, 0);
+      bagCount.textContent = count;
+      bagItems.replaceChildren();
+      emptyBag.hidden = count > 0;
+      bagTotal.hidden = count === 0;
+      let total = 0;
 
-function updateBag() {
-      const count = Object.values(bag).reduce((sum, quantity) => sum + quantity, 0);
-      document.getElementById("bagCount").textContent = count;
-      document.getElementById("openBag").setAttribute("aria-label", `Open shopping bag, ${count} items`);
-
-const selected = catalog.filter(product => bag[product.id]);
-      document.getElementById("bagItems").innerHTML = selected.length
-        ? selected.map(product => `
-          <div class="bag-item">
-            <div class="bag-thumbnail">${garment(product)}</div>
-            <div class="bag-details">
-              <h3>${product.name} / ${product.color}</h3>
-              <div class="quantity-controls">
-                <button data-change="${product.id}" data-delta="-1" aria-label="Decrease ${product.name} quantity">−</button>
-                <span aria-label="Quantity">${bag[product.id]}</span>
-                <button data-change="${product.id}" data-delta="1" aria-label="Increase ${product.name} quantity" ${bag[product.id] >= 99 ? "disabled" : ""}>+</button>
-              </div>
-              <button class="remove-button" data-remove="${product.id}" aria-label="Remove ${product.name} from bag">Remove</button>
-            </div>
-          </div>
-        `).join("")
-        : `<p class="preview-note">Your next everyday favorite belongs here. Explore the collection to start your rotation.</p>`;
-
-try {
-        localStorage.setItem("loom7-bag", JSON.stringify(bag));
-      } catch {
-        // Shopping bag remains available for the current page session.
+      for (const [id, quantity] of bag) {
+        const product = catalogue.find(item => item.id === id);
+        if (!product) continue;
+        total += product.price * quantity;
+        const row = document.createElement('div');
+        row.className = 'bag-row';
+        const details = document.createElement('div');
+        const name = document.createElement('strong');
+        name.textContent = product.name;
+        const quantityText = document.createElement('p');
+        quantityText.textContent = `Quantity: ${quantity}`;
+        details.append(name, quantityText);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.dataset.remove = id;
+        remove.textContent = 'Remove';
+        row.append(details, remove);
+        bagItems.append(row);
       }
+      totalValue.textContent = money.format(total);
     }
 
-function notify(message) {
-      const toast = document.getElementById("toast");
-      toast.textContent = message;
-      toast.classList.add("visible");
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove("visible"), 2400);
-    }
-
-document.querySelectorAll("[data-filter]").forEach(button => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll("[data-filter]").forEach(filter => {
-          filter.setAttribute("aria-pressed", String(filter === button));
+    document.querySelectorAll('[data-filter]').forEach(button => {
+      button.addEventListener('click', () => {
+        const filter = button.dataset.filter;
+        document.querySelectorAll('[data-filter]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+        document.querySelectorAll('.product-card').forEach(card => {
+          card.hidden = filter !== 'all' && card.dataset.category !== filter;
         });
-        renderProducts(button.dataset.filter);
       });
     });
 
-products.addEventListener("click", event => {
-      const button = event.target.closest("[data-add]");
-      if (!button) return;
-      const product = catalog.find(item => item.id === button.dataset.add);
-      if ((bag[product.id] || 0) >= 99) {
-        notify("Maximum quantity reached.");
-        return;
-      }
-      bag[product.id] = (bag[product.id] || 0) + 1;
-      updateBag();
-      notify(`${product.name} added to your bag.`);
-    });
-
-document.getElementById("bagItems").addEventListener("click", event => {
-      const change = event.target.closest("[data-change]");
-      const remove = event.target.closest("[data-remove]");
-      if (change) {
-        const id = change.dataset.change;
-        bag[id] = Math.min(99, bag[id] + Number(change.dataset.delta));
-        if (bag[id] <= 0) delete bag[id];
-      } else if (remove) {
-        delete bag[remove.dataset.remove];
-      } else {
-        return;
+    document.addEventListener('click', event => {
+      const addButton = event.target.closest('[data-add]');
+      if (addButton) {
+        const id = addButton.dataset.add;
+        bag.set(id, (bag.get(id) || 0) + 1);
+        renderBag();
+        toast.textContent = `${catalogue.find(item => item.id === id).name} added to your bag`;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
       }
 
-const id = change ? change.dataset.change : remove.dataset.remove;
-      const delta = change ? change.dataset.delta : null;
-      updateBag();
-
-const replacement = delta
-        ? document.querySelector(`[data-change="${id}"][data-delta="${delta}"]`)
-        : null;
-      if (replacement && !replacement.disabled) replacement.focus();
-      else document.getElementById("closeBag").focus();
+      const removeButton = event.target.closest('[data-remove]');
+      if (removeButton) {
+        bag.delete(removeButton.dataset.remove);
+        renderBag();
+      }
     });
 
-document.getElementById("openBag").addEventListener("click", () => {
-      dialog.showModal();
-      document.body.style.overflow = "hidden";
+    openBagButton.addEventListener('click', () => bagDialog.showModal());
+    document.getElementById('closeBag').addEventListener('click', () => bagDialog.close());
+    bagDialog.addEventListener('click', event => {
+      if (event.target === bagDialog) bagDialog.close();
     });
-
-document.getElementById("closeBag").addEventListener("click", () => dialog.close());
-    dialog.addEventListener("close", () => {
-      document.body.style.overflow = "";
-      document.getElementById("openBag").focus();
-    });
-    dialog.addEventListener("click", event => {
-      const rect = dialog.getBoundingClientRect();
-      if (
-        event.target === dialog &&
-        (event.clientX < rect.left || event.clientX > rect.right ||
-         event.clientY < rect.top || event.clientY > rect.bottom)
-      ) dialog.close();
-    });
-
-document.getElementById("heroShirt").innerHTML = garment(catalog[0]);
-    document.getElementById("year").textContent = new Date().getFullYear();
-    renderProducts();
-    updateBag();
+    document.getElementById('year').textContent = new Date().getFullYear();
+    renderBag();
   </script>
 </body>
 </html>

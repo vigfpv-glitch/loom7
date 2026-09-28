@@ -1,1 +1,434 @@
-x
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#19382d">
+  <title>loom7 — Wear your own rhythm.</title>
+  <style>
+    :root {
+      --paper: #f3f0e8;
+      --ink: #19382d;
+      --muted: #6c736a;
+      --acid: #dfff7a;
+      --line: #d9dcd0;
+    }
+
+* { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    button, input { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+    :focus-visible { outline: 3px solid #75952b; outline-offset: 5px; }
+    ::selection { background: var(--acid); color: var(--ink); }
+
+.announcement {
+      padding: 11px 20px;
+      background: var(--ink);
+      color: var(--paper);
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 5%;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      line-height: 1;
+    }
+    .logo img {
+      display: block;
+      width: 140px;
+      max-height: 42px;
+      object-fit: contain;
+      object-position: left center;
+      filter: brightness(0);
+    }
+    .nav { display: flex; gap: 32px; font-size: 13px; }
+    .nav a:hover { text-decoration: underline; text-underline-offset: 6px; }
+    .bag-trigger {
+      border: 1px solid var(--ink);
+      border-radius: 30px;
+      padding: 10px 17px;
+      background: transparent;
+      color: var(--ink);
+      font-size: 12px;
+    }
+    .bag-count {
+      display: inline-grid;
+      place-items: center;
+      min-width: 20px;
+      height: 20px;
+      margin-left: 7px;
+      background: var(--ink);
+      color: white;
+      border-radius: 50%;
+      font-size: 10px;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 650px;
+      border-bottom: 1px solid var(--line);
+    }
+    .hero-copy {
+      padding: 75px 7% 55px 10%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .eyebrow::before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 10px;
+      background: currentColor;
+      border-radius: 50%;
+    }
+    h1 {
+      margin: 26px 0;
+      font-size: clamp(64px, 7.7vw, 122px);
+      font-weight: 800;
+      letter-spacing: -.075em;
+      line-height: .94;
+    }
+    h1 em {
+      font-family: Georgia, serif;
+      font-weight: 400;
+      letter-spacing: -.065em;
+    }
+    .hero-copy p {
+      max-width: 315px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 45px;
+      padding: 17px 23px;
+      background: var(--ink);
+      color: var(--paper);
+      border: 1px solid var(--ink);
+      font-size: 12px;
+      transition: background .2s, transform .2s;
+    }
+    .button:hover { background: #2f5142; transform: translateY(-2px); }
+    .hero-copy .button { margin-top: 20px; }
+    .hero-footnote {
+      margin-top: 48px;
+      font-size: 9px;
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+    }
+    .hero-art {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #dce2d3;
+      min-height: 540px;
+    }
+    .hero-art::before {
+      content: "7";
+      position: absolute;
+      font-size: min(53vw, 780px);
+      font-weight: 900;
+      color: #c7d0bb;
+      line-height: 1;
+      transform: rotate(-9deg);
+    }
+    .hero-shirt { position: relative; width: 94%; transform: rotate(-10deg); }
+    .hero-shirt svg { display: block; width: 100%; filter: drop-shadow(18px 28px 17px #263b252b); }
+    .art-label {
+      position: absolute;
+      bottom: 28px;
+      left: 28px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      line-height: 1.8;
+    }
+    .sticker {
+      position: absolute;
+      top: 35px;
+      right: 30px;
+      width: 98px;
+      height: 98px;
+      display: grid;
+      place-content: center;
+      background: var(--acid);
+      border-radius: 50%;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.5;
+      transform: rotate(12deg);
+    }
+    .ticker {
+      padding: 19px 5%;
+      background: var(--acid);
+      display: flex;
+      justify-content: space-around;
+      gap: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .collection { padding: 85px 5%; }
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 25px;
+      margin-bottom: 34px;
+    }
+    h2 {
+      font-size: clamp(36px, 4vw, 58px);
+      letter-spacing: -2.5px;
+      line-height: 1.05;
+      margin: 14px 0 0;
+      font-weight: 500;
+    }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter {
+      padding: 10px 17px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      color: var(--ink);
+      background: transparent;
+      font-size: 11px;
+    }
+    .filter[aria-pressed="true"] {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+    .products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .product { min-width: 0; }
+    .product-image { position: relative; aspect-ratio: 4/5; overflow: hidden; background: #e8e5dc; }
+    .product-image img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+    .product:hover .product-image img { transform: scale(1.04); }
+    .product-info { padding: 13px 2px; display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
+    .product-info span:last-child { white-space: nowrap; }
+    .product-tag { position: absolute; top: 12px; left: 12px; padding: 7px 9px; background: var(--paper); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+    .add-button { width: 100%; padding: 13px 15px; border: 1px solid var(--ink); background: transparent; color: var(--ink); font-size: 11px; }
+    .add-button:hover { background: var(--ink); color: var(--paper); }
+    .story { padding: 90px 10%; display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; background: #e7e9df; }
+    .story-art { min-height: 330px; display: grid; place-items: center; background: var(--acid); font-size: 180px; font-weight: 900; letter-spacing: -20px; }
+    .story-copy p { max-width: 430px; color: var(--muted); font-size: 15px; line-height: 1.9; }
+    .footer { padding: 38px 5%; display: flex; justify-content: space-between; align-items: center; gap: 25px; border-top: 1px solid var(--line); font-size: 10px; letter-spacing: 1px; }
+    .footer-brand { font-size: 25px; font-weight: 900; letter-spacing: -2px; }
+    .bag-dialog { width: min(440px, calc(100% - 30px)); max-height: 80vh; padding: 0; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
+    .bag-dialog::backdrop { background: #14251db0; }
+    .bag-head { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--line); }
+    .bag-head h2 { margin: 0; font-size: 25px; }
+    .close-bag { border: 0; background: transparent; font-size: 24px; color: var(--ink); }
+    .bag-items { padding: 20px; }
+    .bag-row { display: flex; justify-content: space-between; gap: 15px; padding: 15px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+    .bag-empty { color: var(--muted); font-size: 13px; }
+    .bag-total { display: flex; justify-content: space-between; padding: 18px 20px; font-weight: 700; }
+    .checkout-note { padding: 0 20px 20px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 50; padding: 14px 18px; background: var(--ink); color: white; font-size: 12px; transform: translateY(100px); opacity: 0; transition: .3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    @media (max-width: 800px) {
+      .header { padding: 16px 5%; }
+      .logo img { width: 118px; max-height: 36px; }
+      .nav { gap: 14px; font-size: 11px; }
+      .bag-trigger { padding: 8px 12px; }
+      .hero { grid-template-columns: 1fr; }
+      .hero-copy { padding: 60px 8%; min-height: 500px; }
+      .hero-art { min-height: 460px; }
+      .hero-art::before { font-size: 90vw; }
+      .ticker { flex-wrap: wrap; justify-content: center; }
+      .products { grid-template-columns: repeat(2, 1fr); gap: 22px 12px; }
+      .story { grid-template-columns: 1fr; gap: 35px; padding: 65px 8%; }
+      .story-art { min-height: 260px; font-size: 140px; }
+    }
+    @media (max-width: 480px) {
+      .announcement { font-size: 8px; letter-spacing: 1.3px; }
+      .header { gap: 10px; }
+      .nav { gap: 10px; }
+      .nav a { font-size: 10px; }
+      .bag-trigger { font-size: 10px; }
+      .logo img { width: 100px; max-height: 32px; }
+      .section-heading { align-items: flex-start; flex-direction: column; }
+      .filters { gap: 6px; }
+      .filter { padding: 8px 12px; }
+      .footer { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="announcement">Free shipping on orders over $75 · Made to move with you</div>
+  <header class="header">
+    <a class="logo" href="#top" aria-label="loom7 home"><img src="assets/loom7-logo.png" alt="loom7" /></a>
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#collection">Shop</a>
+      <a href="#story">Our story</a>
+      <a href="#footer">Contact</a>
+    </nav>
+    <button class="bag-trigger" id="openBag" type="button" aria-haspopup="dialog">Bag <span class="bag-count" id="bagCount">0</span></button>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <div class="eyebrow">Everyday essentials, reimagined</div>
+        <h1 id="heroTitle">Wear your<br><em>own rhythm.</em></h1>
+        <p>Thoughtful staples for wherever the day takes you. Easy fits, considered details, and a little room to move.</p>
+        <a class="button" href="#collection">Explore the collection <span aria-hidden="true">↗</span></a>
+        <div class="hero-footnote">Designed for the in-between moments · Est. 2024</div>
+      </div>
+      <div class="hero-art" aria-label="Loom7 signature tee illustration">
+        <div class="sticker">MADE TO<br>MOVE<br>WITH YOU</div>
+        <div class="hero-shirt" aria-hidden="true">
+          <svg viewBox="0 0 600 570" role="img" aria-label="Illustrated forest-green T-shirt with a cream number seven">
+            <path d="M184 95 259 64h82l75 31 115 55-55 120-62-30v254H186V240l-62 30-55-120z" fill="#315243"/>
+            <path d="M259 64c2 31 13 51 41 51s39-20 41-51" fill="none" stroke="#e6e5d8" stroke-width="12"/>
+            <path d="m280 191 77-8-52 54 25 1-15 16 54 9-4 18-88-14 4-16 36-37-51 5z" fill="#f3f0e8"/>
+            <text x="299" y="355" fill="#f3f0e8" font-size="38" font-family="Arial" font-weight="700" letter-spacing="5">LOOM7</text>
+          </svg>
+        </div>
+        <div class="art-label">LOOM7 / DROP 01<br>THE EVERYDAY TEE</div>
+      </div>
+    </section>
+
+    <div class="ticker" aria-label="Brand values"><span>Better basics</span><span>Made for movement</span><span>Wear on repeat</span></div>
+
+    <section class="collection" id="collection" aria-labelledby="collectionTitle">
+      <div class="section-heading">
+        <div><div class="eyebrow">The first collection</div><h2 id="collectionTitle">Good things<br>get worn.</h2></div>
+        <div class="filters" role="group" aria-label="Filter products">
+          <button class="filter" type="button" data-filter="all" aria-pressed="true">All</button>
+          <button class="filter" type="button" data-filter="daily" aria-pressed="false">Daily</button>
+          <button class="filter" type="button" data-filter="offduty" aria-pressed="false">Off-duty</button>
+          <button class="filter" type="button" data-filter="weekend" aria-pressed="false">Weekend</button>
+        </div>
+      </div>
+      <div class="products" id="products" aria-live="polite"></div>
+    </section>
+
+    <section class="story" id="story" aria-labelledby="storyTitle">
+      <div class="story-art" aria-hidden="true">7</div>
+      <div class="story-copy">
+        <div class="eyebrow">A little more considered</div>
+        <h2 id="storyTitle">Clothes for the<br>life you actually live.</h2>
+        <p>We started loom7 with a simple thought: the pieces you reach for most should feel like you. So we focus on clean lines, easy layers, and details that make the everyday a little better.</p>
+        <p>No fuss. No noise. Just good things, made to move with you.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer" id="footer"><span class="footer-brand">loom7</span><span>© <span id="year"></span> LOOM7 · Wear your own rhythm.</span><a href="mailto:hello@loom7.example">hello@loom7.example</a></footer>
+
+  <dialog class="bag-dialog" id="bagDialog" aria-labelledby="bagTitle">
+    <div class="bag-head"><h2 id="bagTitle">Your bag</h2><button class="close-bag" id="closeBag" type="button" aria-label="Close bag">×</button></div>
+    <div class="bag-items" id="bagItems"></div>
+    <div class="bag-total"><span>Total</span><span id="bagTotal">$0.00</span></div>
+    <p class="checkout-note">This demo storefront is a design preview. Checkout is not enabled yet.</p>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const products = [
+      { id: 'daily-tee', name: 'The Everyday Tee', price: 38, tag: 'BESTSELLER', category: 'daily', color: 'Forest', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=85' },
+      { id: 'relaxed-hoodie', name: 'The Off-Duty Hoodie', price: 74, tag: 'SOFT LAYER', category: 'offduty', color: 'Oat', image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=85' },
+      { id: 'weekend-shirt', name: 'The Weekend Shirt', price: 58, tag: 'EASY FIT', category: 'weekend', color: 'Stone', image: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?auto=format&fit=crop&w=900&q=85' },
+      { id: 'after-hours', name: 'The After Hours Tee', price: 42, tag: 'NEW', category: 'daily', color: 'Ink', image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=85' },
+    ];
+
+    const cart = new Map();
+    const productsEl = document.getElementById('products');
+    const bagCountEl = document.getElementById('bagCount');
+    const bagDialog = document.getElementById('bagDialog');
+    const bagItemsEl = document.getElementById('bagItems');
+    const bagTotalEl = document.getElementById('bagTotal');
+    const toast = document.getElementById('toast');
+    let toastTimer;
+
+    function renderProducts(filter = 'all') {
+      const visibleProducts = products.filter(product => filter === 'all' || product.category === filter);
+      productsEl.innerHTML = visibleProducts.map(product => `
+        <article class="product">
+          <div class="product-image"><img src="${product.image}" alt="${product.name} in ${product.color}" loading="lazy"><span class="product-tag">${product.tag}</span></div>
+          <div class="product-info"><span>${product.name}</span><span>$${product.price.toFixed(2)}</span></div>
+          <button class="add-button" type="button" data-add="${product.id}">Add to bag</button>
+        </article>
+      `).join('');
+    }
+
+    function renderBag() {
+      const items = [...cart.values()];
+      const count = items.reduce((sum, item) => sum + item.quantity, 0);
+      const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      bagCountEl.textContent = count;
+      bagItemsEl.innerHTML = items.length
+        ? items.map(item => `<div class="bag-row"><span>${item.name} × ${item.quantity}</span><span>$${(item.price * item.quantity).toFixed(2)}</span></div>`).join('')
+        : '<p class="bag-empty">Your bag is taking a breather. Add something you love.</p>';
+      bagTotalEl.textContent = `$${total.toFixed(2)}`;
+    }
+
+    document.querySelectorAll('.filter').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.filter').forEach(filter => filter.setAttribute('aria-pressed', 'false'));
+        button.setAttribute('aria-pressed', 'true');
+        renderProducts(button.dataset.filter);
+      });
+    });
+
+    productsEl.addEventListener('click', event => {
+      const button = event.target.closest('[data-add]');
+      if (!button) return;
+      const product = products.find(item => item.id === button.dataset.add);
+      const existing = cart.get(product.id);
+      cart.set(product.id, { ...product, quantity: (existing?.quantity || 0) + 1 });
+      renderBag();
+      toast.textContent = `${product.name} added to your bag`;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    });
+
+    document.getElementById('openBag').addEventListener('click', () => bagDialog.showModal());
+    document.getElementById('closeBag').addEventListener('click', () => bagDialog.close());
+    bagDialog.addEventListener('click', event => {
+      if (event.target === bagDialog) bagDialog.close();
+    });
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+    renderProducts();
+    renderBag();
+  </script>
+</body>
+</html>

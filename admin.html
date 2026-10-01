@@ -29,42 +29,19 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Fill these with your Supabase project URL and publishable/anon key (never a service-role key).
-    const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY';
+    // Browser-safe project URL and publishable key. Never use a service-role key here.
+    const SUPABASE_URL = 'https://oofrtvkdljiphcsydcjo.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_18ficoJXs66FopQnhcmkbA_kpDSF3yX';
     const $ = (id) => document.getElementById(id);
     const authView = $('auth'), appView = $('app'), authNotice = $('authNotice'), notice = $('notice');
     let db = null;
     const escapeHtml = (value='') => String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     function showMessage(node, text, type='') { node.textContent=text; node.className='notice'+(type?' '+type:''); }
     function showAuth() { authView.classList.remove('hidden'); appView.classList.add('hidden'); $('signout').classList.add('hidden'); }
-    async function isAdmin(user) {
-      const {data,error}=await db.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle();
-      if(error) throw error;
-      return !!data;
-    }
-    async function enterApp(user) {
-      if(!await isAdmin(user)) { await db.auth.signOut(); showAuth(); showMessage(authNotice,'This account is not authorized for the admin panel.','error'); return; }
-      authView.classList.add('hidden'); appView.classList.remove('hidden'); $('signout').classList.remove('hidden');
-      await Promise.all([loadProducts(),loadSubscribers()]);
-    }
-    async function loadProducts() {
-      const box=$('productsList'); box.innerHTML='<p class="muted">Loading products…</p>';
-      const {data,error}=await db.from('products').select('*').order('created_at',{ascending:false});
-      if(error) { box.textContent='Could not load products: '+error.message; return; }
-      if(!data.length) { box.innerHTML='<div class="empty">No products yet. Add one using the form.</div>'; return; }
-      box.innerHTML='<table><thead><tr><th>Image</th><th>Product</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+data.map(p=>'<tr><td>'+(p.image_url?'<img class="thumb" src="'+escapeHtml(p.image_url)+'" alt="">':'—')+'</td><td><strong>'+escapeHtml(p.name)+'</strong><br><span class="muted">'+escapeHtml(p.description||'')+'</span></td><td><span class="status">'+(p.is_visible?'Visible':'Hidden')+'</span></td><td><button class="btn" data-edit="'+p.id+'">Edit</button> <button class="btn danger" data-delete="'+p.id+'">Delete</button></td></tr>').join('')+'</tbody></table>';
-      box.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(data.find(p=>p.id===b.dataset.edit))));
-      box.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>deleteProduct(b.dataset.delete)));
-    }
-    async function loadSubscribers() {
-      const box=$('subscribersList'); box.innerHTML='<p class="muted">Loading subscribers…</p>';
-      const {data,error}=await db.from('newsletter_subscribers').select('id,email,full_name,consented_at').order('consented_at',{ascending:false});
-      if(error) { box.textContent='Could not load subscribers: '+error.message; return; }
-      $('subscriberCount').textContent='('+data.length+')';
-      if(!data.length) { box.innerHTML='<div class="empty">No newsletter subscribers yet.</div>'; return; }
-      box.innerHTML='<table><thead><tr><th>Name</th><th>Email</th><th>Consent date</th></tr></thead><tbody>'+data.map(s=>'<tr><td>'+escapeHtml(s.full_name||'—')+'</td><td>'+escapeHtml(s.email)+'</td><td>'+new Date(s.consented_at).toLocaleDateString()+'</td></tr>').join('')+'</tbody></table>';
-    }
+    async function isAdmin(user) { const {data,error}=await db.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle(); if(error) throw error; return !!data; }
+    async function enterApp(user) { if(!await isAdmin(user)) { await db.auth.signOut(); showAuth(); showMessage(authNotice,'This account is not authorized for the admin panel.','error'); return; } authView.classList.add('hidden'); appView.classList.remove('hidden'); $('signout').classList.remove('hidden'); await Promise.all([loadProducts(),loadSubscribers()]); }
+    async function loadProducts() { const box=$('productsList'); box.innerHTML='<p class="muted">Loading products…</p>'; const {data,error}=await db.from('products').select('*').order('created_at',{ascending:false}); if(error) { box.textContent='Could not load products: '+error.message; return; } if(!data.length) { box.innerHTML='<div class="empty">No products yet. Add one using the form.</div>'; return; } box.innerHTML='<table><thead><tr><th>Image</th><th>Product</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+data.map(p=>'<tr><td>'+(p.image_url?'<img class="thumb" src="'+escapeHtml(p.image_url)+'" alt="">':'—')+'</td><td><strong>'+escapeHtml(p.name)+'</strong><br><span class="muted">'+escapeHtml(p.description||'')+'</span></td><td><span class="status">'+(p.is_visible?'Visible':'Hidden')+'</span></td><td><button class="btn" data-edit="'+p.id+'">Edit</button> <button class="btn danger" data-delete="'+p.id+'">Delete</button></td></tr>').join('')+'</tbody></table>'; box.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editProduct(data.find(p=>p.id===b.dataset.edit)))); box.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>deleteProduct(b.dataset.delete))); }
+    async function loadSubscribers() { const box=$('subscribersList'); box.innerHTML='<p class="muted">Loading subscribers…</p>'; const {data,error}=await db.from('newsletter_subscribers').select('id,email,full_name,consented_at').order('consented_at',{ascending:false}); if(error) { box.textContent='Could not load subscribers: '+error.message; return; } $('subscriberCount').textContent='('+data.length+')'; if(!data.length) { box.innerHTML='<div class="empty">No newsletter subscribers yet.</div>'; return; } box.innerHTML='<table><thead><tr><th>Name</th><th>Email</th><th>Consent date</th></tr></thead><tbody>'+data.map(s=>'<tr><td>'+escapeHtml(s.full_name||'—')+'</td><td>'+escapeHtml(s.email)+'</td><td>'+new Date(s.consented_at).toLocaleDateString()+'</td></tr>').join('')+'</tbody></table>'; }
     function editProduct(p) { $('productId').value=p.id; $('productName').value=p.name; $('productDescription').value=p.description||''; $('productImage').value=p.image_url||''; $('productVisible').checked=p.is_visible; $('formHeading').textContent='Edit product'; $('cancelEdit').classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'}); }
     function resetProductForm() { $('productForm').reset(); $('productId').value=''; $('productVisible').checked=true; $('formHeading').textContent='Add product'; $('cancelEdit').classList.add('hidden'); }
     async function deleteProduct(id) { if(!confirm('Delete this product? This cannot be undone.')) return; const {error}=await db.from('products').delete().eq('id',id); if(error) showMessage(notice,'Could not delete product: '+error.message,'error'); else { showMessage(notice,'Product deleted.','success'); await loadProducts(); } }
@@ -73,7 +50,7 @@
     $('cancelEdit').addEventListener('click',resetProductForm);
     document.querySelectorAll('[data-tab]').forEach(tab=>tab.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(t=>t.setAttribute('aria-selected',String(t===tab))); const products=tab.dataset.tab==='products'; $('productsPanel').classList.toggle('hidden',!products); $('subscribersPanel').classList.toggle('hidden',products); }));
     $('signout').addEventListener('click',async()=>{await db.auth.signOut();showAuth();});
-    if(!window.supabase||SUPABASE_URL.startsWith('YOUR_')||SUPABASE_ANON_KEY.startsWith('YOUR_')) { showMessage(authNotice,'Setup required: add your Supabase project URL and publishable/anon key in admin.html.'); }
+    if(!window.supabase) { showMessage(authNotice,'Could not load the Supabase client library. Check your connection and reload.','error'); }
     else { db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY); db.auth.getSession().then(async ({data})=>{if(data.session) { try { await enterApp(data.session.user); } catch(e) { showAuth(); showMessage(authNotice,'Could not verify admin access. Check Supabase setup.','error'); } }}); }
   </script>
 </body>

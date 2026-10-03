@@ -136,7 +136,8 @@
     .social .button{background:#fff;color:var(--dark);border-color:#fff}
     .social .button:hover{background:var(--accent);border-color:var(--accent);color:#fff}
     .footer{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:28px 7vw;background:#1a1816;color:#cfc9c1;font-size:11px}
-    .footer-brand{font:700 20px 'Playfair Display',Georgia,serif;letter-spacing:.08em;color:#fff}
+    .footer-brand{display:block;filter:brightness(0) invert(1)}
+    .footer-brand img{display:block;height:24px;width:auto}
     .footer-links{display:flex;gap:20px}
     .footer-links a{padding:8px 0}
     @media(max-width:1020px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.product-image{height:330px}.hero{min-height:560px}.hero-image{min-height:560px}}
@@ -232,7 +233,7 @@
 <a class="mobile-sticky-cta" href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Message Loom7 on Instagram</a>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<footer class="footer"><a class="footer-brand" href="#home">LOOM7</a><span>© <span id="year"></span> Loom7. All rights reserved.</span><div class="footer-links"><a href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Instagram @loom7.co</a><a href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Order via DM</a></div></footer>
+<footer class="footer"><a class="footer-brand" href="#home" aria-label="Loom7 — back to top"><img src="LOOM7_logo_transparent.png" alt="LOOM7 — Timeless, Thoughtfully Made" width="859" height="598"></a><span>© <span id="year"></span> Loom7. All rights reserved.</span><div class="footer-links"><a href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Instagram @loom7.co</a><a href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Order via DM</a></div></footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/supabase-config.js"></script>
   <script src="assets/hero.js"></script>

@@ -157,12 +157,12 @@
       <div class="hero-copy">
         <div class="eyebrow">Considered style · Everyday wear</div>
         <h1 id="hero-title">Timeless styles for modern you</h1>
-        <p>Clothing made for the way you move through every day. Explore The Roots collection and message us on Instagram to order.</p>
-        <a class="button" href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Order via Instagram DM</a>
+        <p id="hero-subtitle">Clothing made for the way you move through every day. Explore The Roots collection and message us on Instagram to order.</p>
+        <a id="hero-cta" class="button" href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Order via Instagram DM</a>
         <div class="hero-note">Personal help with sizes, fit and availability</div>
       </div>
       <div class="media hero-image" data-fallback="The Roots collection">
-        <img src="assets/hero-static.webp" alt="Model wearing a contemporary Loom7 outfit" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')">
+        <img id="hero-image" src="assets/hero-static.webp" alt="Model wearing a contemporary Loom7 outfit" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')">
       </div>
     </section>
 
@@ -233,6 +233,9 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <footer class="footer"><a class="footer-brand" href="#home">LOOM7</a><span>© <span id="year"></span> Loom7. All rights reserved.</span><div class="footer-links"><a href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Instagram @loom7.co</a><a href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Order via DM</a></div></footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+  <script src="assets/hero.js"></script>
   <script>
     const instagramUrl = 'https://ig.me/m/loom7.co';
     const toast = document.getElementById('toast');

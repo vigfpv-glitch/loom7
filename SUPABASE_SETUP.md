@@ -18,7 +18,7 @@ Only allowlisted accounts can use admin operations or view subscriber records.
 
 ## Configure the admin page
 
-In `admin.html`, replace `YOUR_SUPABASE_PROJECT_URL` and `YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY` with the project URL and publishable (or legacy anon) key from Supabase **Project Settings → API**.
+The storefront and admin page share the existing public Supabase configuration in `assets/supabase-config.js`. If moving to a different project, update the project URL and publishable (or legacy anon) key there using Supabase **Project Settings → API**.
 
 These browser keys are public by design. **Never** put a `service_role` or secret key in `admin.html`, `index.html`, or any public repository file. Database row-level security is essential; keep it enabled.
 
@@ -39,3 +39,18 @@ In the admin product form, choose a JPEG, PNG, or WebP image up to 3 MB. A previ
 Netlify installs the dependencies in `package.json` and deploys the image function from `netlify/functions`. Image storage is provisioned automatically and persists across deploys. The upload function uses the same Supabase project as the current admin page; update its project URL too if moving to another Supabase project. No storage bucket or additional secret key is required.
 
 The subscribers list is for newsletter signups, not order/customer records. The current storefront sends product enquiries to Instagram and does not import Instagram messages or customer/order history.
+
+## Editable Hero Section
+
+The repository is a static HTML/JavaScript website, not a React/Vite application. The existing design and admin sign-in flow have been retained.
+
+1. In your existing Supabase dashboard, open **SQL Editor** and run the entire contents of `supabase/hero.sql`. If setting up a fresh project, run `supabase/schema.sql` first; the Hero policies reuse its `is_loom7_admin()` function and `admin_users` allowlist.
+2. The script creates `hero_content` and the public `hero_images` storage bucket. It is rerunnable and does not reset saved content. No separate bucket creation or terminal command is needed. This dashboard step is required; deploying website files does not execute Supabase SQL automatically.
+3. Sign in to `admin.html` with an existing allowlisted admin account and select **Hero Section**. Edit Title, Subtitle, Button Text, and Button Link. Optionally select a JPEG, PNG, or WebP image up to 5 MB, then select **Save Hero Section**.
+4. Reload the storefront to see the published content. With an empty table, a failed fetch, or an unavailable Supabase script, the original text and image remain visible. A failed custom image falls back to `assets/hero-static.webp`. An empty subtitle intentionally hides the subtitle text.
+
+The Hero is a single record with UUID `00000000-0000-4000-8000-000000000001`; a database constraint prevents multiple competing Hero records. The admin uses an upsert so the first save creates the record and later saves update it. No seed row is needed. Public visitors can read Hero content and view public images, but only allowlisted admins can change content or upload/manage files. Button links only accept HTTP or HTTPS URLs.
+
+Each image replacement receives a unique filename to avoid stale browser/CDN caches. Leaving the upload field empty preserves the current image. Failed saves attempt to remove the newly uploaded file, while previously published images are retained to avoid breaking cached pages. Unused older images can be removed manually from **Storage → hero_images** after checking that their URLs are no longer used.
+
+Verify an empty-table fallback, first save, text-only updates, image replacement, an invalid upload, a failed image URL, and sign-out/sign-in. Also verify that an anonymous visitor and a signed-in account not present in `admin_users` cannot modify `hero_content` or upload/delete objects in `hero_images`. The bucket is public: do not upload private or sensitive images. Existing broad Storage policies can grant additional access, so review any pre-existing policies that apply to all buckets.

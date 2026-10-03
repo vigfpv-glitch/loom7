@@ -67,8 +67,8 @@ button,a,input,textarea,select{ -webkit-tap-highlight-color:transparent}
 .field{gap:8px;margin-bottom:20px}
 .field label{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:600}
 .required,.field-hint{font-size:10px;color:var(--muted);font-weight:400}
-.field input,.field textarea,.toolbar input,.toolbar select{border:1px solid var(--line);padding:12px;background:#fff;color:var(--ink);border-radius:2px;min-height:46px;width:100%;transition:border-color .2s}
-.field input:focus,.field textarea:focus,.toolbar input:focus,.toolbar select:focus{border-color:var(--accent)}
+.field input,.field textarea,.field select,.toolbar input,.toolbar select{border:1px solid var(--line);padding:12px;background:#fff;color:var(--ink);border-radius:2px;min-height:46px;width:100%;transition:border-color .2s}
+.field input:focus,.field textarea:focus,.field select:focus,.toolbar input:focus,.toolbar select:focus{border-color:var(--accent)}
 input::placeholder,textarea::placeholder{color:#84867a;font-size:12px}
 .field textarea{min-height:116px}
 .field input[type="file"]{font-size:12px;padding:8px}
@@ -144,3 +144,7 @@ dialog p{font-size:13px;color:var(--muted)}
 @media(max-width:1000px){.layout{grid-template-columns:1fr}.collection{grid-row:1}.auth-story,.auth-form{padding:36px 28px}.workspace-label{display:none}}
 @media(max-width:600px){.top{height:72px;padding:0 18px}.brand{font-size:22px}.brand small{font-size:8px;margin-left:5px}.top-actions{gap:12px}.site-link{font-size:10px}.top .btn{padding:8px;font-size:10px}.wrap{padding:0 16px;margin:28px auto}.heading{margin-bottom:24px}.heading p{font-size:12px}.overview{grid-template-columns:1fr 1fr;margin-bottom:22px}.overview>div{padding:18px}.overview .overview-main{grid-column:1/-1}.overview>div:nth-child(2){border-left:0}.overview>div:not(:first-child){border-top:1px solid var(--line)}.overview dd{font-size:34px}.overview dt,.overview span{font-size:10px}.panel{padding:18px}.panel h2{font-size:25px}.panel-heading .btn{font-size:11px;padding:8px 10px}.toolbar{flex-wrap:wrap}.toolbar .search{flex-basis:100%}.toolbar select{width:100%}.toolbar>label:not(.search){width:100%}.auth{grid-template-columns:1fr;margin:20px 0}.auth-story{min-height:0;padding:28px}.auth-story h1{font-size:29px;margin:8px 0 16px}.auth-story p,.story-foot{display:none}.auth-form{padding:28px}.auth-form h2{font-size:32px}.workspace-footer{gap:16px}.tabs{gap:24px}th,td{padding:12px 8px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.edit-dialog{width:min(560px,calc(100% - 32px));max-height:calc(100vh - 32px);overflow:auto}
+.edit-dialog fieldset{border:0;padding:0;margin:0;min-width:0}
+.edit-dialog .image-preview{flex-wrap:wrap}
+.edit-dialog .image-preview .btn{margin-left:auto}

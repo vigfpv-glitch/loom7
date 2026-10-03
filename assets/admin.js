@@ -11,6 +11,9 @@ let subscribers = [];
 let pendingDelete = null;
 let currentImageUrl = '';
 let previewObjectUrl = '';
+let editingProduct = null;
+let editSaving = false;
+let editPreviewObjectUrl = '';
 let currentHeroImage = window.Loom7Hero.defaults.image_url;
 let heroPreviewObjectUrl = '';
 let heroLoaded = false;
@@ -45,6 +48,7 @@ function showAuth() {
   $('collectionNotice').classList.add('hidden');
   $('collectionRetry').classList.add('hidden');
   resetProductForm();
+  closeEditDialog(true);
   heroLoadVersion += 1;
   heroLoaded = false;
   $('heroFields').disabled = true;
@@ -207,14 +211,15 @@ async function loadWebsiteProducts() {
   const response = await fetch(websiteUrl, {cache: 'no-store'});
   if (!response.ok) throw new Error('Could not load the website collection.');
   const website = new DOMParser().parseFromString(await response.text(), 'text/html');
-  return Array.from(website.querySelectorAll('#collection .product')).map((card, index) => {
+  return Array.from(website.querySelectorAll('#collection .product[data-product-key]')).map(card => {
     const name = card.querySelector('.product-copy h3')?.textContent.trim();
     const image = card.querySelector('.product-image img')?.getAttribute('src');
     return {
-      id: 'website-' + index,
+      id: 'website-' + card.dataset.productKey,
+      website_key: card.dataset.productKey,
       name,
       description: card.querySelector('.product-copy p')?.textContent.trim() || '',
-      image_url: image ? new URL(image, websiteUrl).href : '',
+      image_url: image || '',
       is_visible: true,
       is_website_product: true,
     };
@@ -223,8 +228,9 @@ async function loadWebsiteProducts() {
 
 function mergeProducts(savedProducts, websiteProducts) {
   return savedProducts.concat(websiteProducts.filter(websiteProduct => !savedProducts.some(product =>
-    product.name.trim().toLowerCase() === websiteProduct.name.toLowerCase()
-    && safeImage(product.image_url) === safeImage(websiteProduct.image_url))));
+    product.website_key === websiteProduct.website_key
+    || (product.name.trim().toLowerCase() === websiteProduct.name.toLowerCase()
+      && safeImage(product.image_url) === safeImage(websiteProduct.image_url)))));
 }
 
 async function loadProducts() {
@@ -287,10 +293,9 @@ function renderProducts() {
     const image = safeImage(product.image_url);
     const name = escapeHtml(product.name);
     const id = escapeHtml(product.id);
-    const actions = product.is_website_product
-      ? '<a class="btn" href="index.html#collection" target="_blank" rel="noopener" aria-label="View ' + name + ' on the website">View on website</a>'
-      : '<button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button><button type="button" class="btn danger" data-delete="' + id + '" aria-label="Delete ' + name + '">Delete</button>';
-    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product · read-only</span>' : '') + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
+    const actions = '<button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button>'
+      + (product.is_website_product ? '' : '<button type="button" class="btn danger" data-delete="' + id + '" aria-label="Delete ' + name + '">Delete</button>');
+    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
   }).join('') + '</tbody></table>';
   box.querySelectorAll('img').forEach(image => image.addEventListener('error', () => {
     const placeholder = document.createElement('span');
@@ -299,7 +304,7 @@ function renderProducts() {
     placeholder.setAttribute('aria-label', 'Image unavailable');
     image.replaceWith(placeholder);
   }));
-  box.querySelectorAll('[data-edit]').forEach(button => button.addEventListener('click', () => editProduct(products.find(product => String(product.id) === button.dataset.edit))));
+  box.querySelectorAll('[data-edit]').forEach(button => button.addEventListener('click', () => openEditDialog(products.find(product => String(product.id) === button.dataset.edit))));
   box.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', () => {
     pendingDelete = products.find(product => String(product.id) === button.dataset.delete);
     $('deleteName').textContent = pendingDelete.name;
@@ -363,32 +368,156 @@ function focusEditor() {
   $('productName').focus({preventScroll: true});
 }
 
-function editProduct(product) {
-  $('productId').value = product.id;
-  $('productName').value = product.name;
-  $('productDescription').value = product.description || '';
-  $('productImage').value = '';
-  $('productImage').setCustomValidity('');
-  currentImageUrl = product.image_url || '';
-  $('productVisible').checked = product.is_visible;
-  $('formHeading').textContent = 'Edit product';
-  $('cancelEdit').classList.remove('hidden');
-  updateDescriptionCount();
-  updatePreview();
-  focusEditor();
-}
-
 function resetProductForm() {
   $('productForm').reset();
-  $('productId').value = '';
   $('productVisible').checked = true;
-  $('formHeading').textContent = 'Add a product';
-  $('cancelEdit').classList.add('hidden');
   $('productImage').setCustomValidity('');
   currentImageUrl = '';
   updateDescriptionCount();
   updatePreview();
 }
+
+const productImageTypes = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'};
+
+function validProductImage(file) {
+  return !file || (file.type in productImageTypes && file.size > 0 && file.size <= 3 * 1024 * 1024);
+}
+
+async function uploadProductImage(file) {
+  const path = 'products/' + crypto.randomUUID() + '.' + productImageTypes[file.type];
+  const {error} = await db.storage.from('product_images').upload(path, file, {contentType: file.type, upsert: false});
+  if (error) throw new Error('Image upload failed. Check that supabase/products.sql has been run.');
+  return {path, url: db.storage.from('product_images').getPublicUrl(path).data.publicUrl};
+}
+
+function productImagePath(url) {
+  if (!url) return '';
+  const prefix = db.storage.from('product_images').getPublicUrl('_').data.publicUrl.slice(0, -1);
+  if (!url.startsWith(prefix)) return '';
+  try { return decodeURIComponent(url.slice(prefix.length).split('?')[0]); } catch { return ''; }
+}
+
+async function removeProductImage(url) {
+  const path = productImagePath(url);
+  if (!path) return;
+  try { await db.storage.from('product_images').remove([path]); } catch {}
+}
+
+function updateEditPreview() {
+  if (editPreviewObjectUrl) URL.revokeObjectURL(editPreviewObjectUrl);
+  editPreviewObjectUrl = '';
+  const file = $('editImage').files[0];
+  if (file) editPreviewObjectUrl = URL.createObjectURL(file);
+  const current = safeImage(editingProduct?.image_url);
+  const url = editPreviewObjectUrl || current;
+  const image = $('editPreviewImage');
+  $('editKeepImage').classList.toggle('hidden', !file);
+  image.hidden = true;
+  image.removeAttribute('src');
+  if (!url) { $('editPreviewStatus').textContent = 'No image yet — choose one to add it.'; return; }
+  $('editPreviewStatus').textContent = 'Loading image preview…';
+  image.onload = () => { image.hidden = false; $('editPreviewStatus').textContent = file ? 'New image — replaces the current one when saved' : 'Current image — kept unless you choose a new one'; };
+  image.onerror = () => { $('editPreviewStatus').textContent = file ? 'This image could not be previewed. Choose another image.' : 'The current image could not be loaded. Choose a new image to replace it.'; };
+  image.referrerPolicy = 'no-referrer';
+  image.src = url;
+}
+
+function updateEditDescriptionCount() {
+  $('editDescriptionCount').textContent = $('editDescription').value.length.toLocaleString() + ' / 1,000 characters';
+}
+
+function openEditDialog(product) {
+  if (!product) return;
+  editingProduct = product;
+  $('editForm').reset();
+  $('editName').setCustomValidity('');
+  $('editImage').setCustomValidity('');
+  $('editName').value = product.name;
+  $('editDescription').value = product.description || '';
+  $('editVisibility').value = product.is_visible ? 'visible' : 'hidden';
+  $('editHeading').textContent = 'Edit “' + product.name + '”';
+  $('editNotice').classList.add('hidden');
+  updateEditDescriptionCount();
+  updateEditPreview();
+  $('editDialog').showModal();
+  $('editName').focus();
+}
+
+function closeEditDialog(force = false) {
+  if (editSaving && !force) return;
+  if ($('editDialog').open) $('editDialog').close();
+  editingProduct = null;
+  $('editImage').value = '';
+  if (editPreviewObjectUrl) URL.revokeObjectURL(editPreviewObjectUrl);
+  editPreviewObjectUrl = '';
+}
+
+$('editForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const product = editingProduct;
+  if (!db || !product || editSaving) return;
+  const name = $('editName').value.trim();
+  const file = $('editImage').files[0];
+  $('editName').setCustomValidity(name ? '' : 'Enter a product title.');
+  $('editImage').setCustomValidity(validProductImage(file) ? '' : 'Choose a JPEG, PNG, or WebP image smaller than 3 MB.');
+  if (!$('editForm').reportValidity()) return;
+  const values = {name, description: $('editDescription').value.trim() || null,
+    image_url: product.image_url || null, is_visible: $('editVisibility').value === 'visible'};
+  let uploaded = null;
+  editSaving = true;
+  setBusy($('editSave'), true, 'Saving…');
+  $('editFields').disabled = true;
+  $('editNotice').classList.add('hidden');
+  try {
+    if (file) {
+      $('editSave').textContent = 'Uploading image…';
+      uploaded = await uploadProductImage(file);
+      values.image_url = uploaded.url;
+      $('editSave').textContent = 'Saving…';
+    }
+    const result = product.is_website_product
+      ? await db.from('products').upsert({...values, website_key: product.website_key}, {onConflict: 'website_key'}).select('id')
+      : await db.from('products').update(values).eq('id', product.id).select('id');
+    if (result.error) throw new Error('This product could not be saved.');
+    if (!result.data?.length) throw new Error('This product no longer exists or you no longer have access to it.');
+    if (uploaded && product.image_url !== uploaded.url) await removeProductImage(product.image_url);
+    uploaded = null;
+    editSaving = false;
+    closeEditDialog();
+    showMessage(notice, '“' + name + '” updated' + (values.is_visible ? ' and visible on the website.' : ' and hidden from the website.'), 'success');
+    if (!appView.classList.contains('hidden')) await loadProducts();
+  } catch (error) {
+    if (uploaded) await removeProductImage(uploaded.url);
+    showMessage($('editNotice'), (error.message || 'This product could not be saved.') + ' Your changes are still in the form. Please try again.', 'error');
+  } finally {
+    editSaving = false;
+    setBusy($('editSave'), false);
+    $('editFields').disabled = false;
+  }
+});
+
+$('editImage').addEventListener('change', () => {
+  $('editImage').setCustomValidity('');
+  if (!validProductImage($('editImage').files[0])) {
+    $('editImage').setCustomValidity('Choose a JPEG, PNG, or WebP image smaller than 3 MB.');
+    $('editImage').reportValidity();
+    return;
+  }
+  updateEditPreview();
+});
+$('editKeepImage').addEventListener('click', () => {
+  $('editImage').value = '';
+  $('editImage').setCustomValidity('');
+  updateEditPreview();
+  $('editImage').focus();
+});
+$('editName').addEventListener('input', () => $('editName').setCustomValidity(''));
+$('editDescription').addEventListener('input', updateEditDescriptionCount);
+$('editCancel').addEventListener('click', () => closeEditDialog());
+$('editDialog').addEventListener('cancel', event => {
+  event.preventDefault();
+  closeEditDialog();
+});
 
 function selectTab(tab) {
   document.querySelectorAll('[data-tab]').forEach(button => {
@@ -424,42 +553,29 @@ $('productForm').addEventListener('submit', async event => {
   const name = $('productName').value.trim();
   if (!name) { $('productName').setCustomValidity('Enter a product name.'); $('productName').reportValidity(); return; }
   const file = $('productImage').files[0];
-  const id = $('productId').value;
   const values = {name, description: $('productDescription').value.trim() || null, image_url: currentImageUrl || null, is_visible: $('productVisible').checked};
+  let uploaded = null;
   setBusy($('saveButton'), true, 'Saving…');
-  $('cancelEdit').disabled = true;
   $('addProduct').disabled = true;
   $('productImage').disabled = true;
   try {
     if (file) {
       $('saveButton').textContent = 'Uploading image…';
-      const {data, error} = await db.auth.getSession();
-      if (error || !data.session) throw new Error('Please sign in again before uploading an image.');
-      const body = new FormData();
-      body.append('image', file);
-      const response = await fetch('/.netlify/functions/product-image', {
-        method: 'POST',
-        headers: {Authorization: 'Bearer ' + data.session.access_token, apikey: SUPABASE_ANON_KEY},
-        body,
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Image upload failed. Please try again.');
-      currentImageUrl = result.url;
-      values.image_url = currentImageUrl;
-      $('productImage').value = '';
-      updatePreview();
+      uploaded = await uploadProductImage(file);
+      values.image_url = uploaded.url;
       $('saveButton').textContent = 'Saving…';
     }
-    const result = id ? await db.from('products').update(values).eq('id', id) : await db.from('products').insert(values);
-    if (result.error) throw result.error;
+    const result = await db.from('products').insert(values);
+    if (result.error) throw new Error('This product could not be saved.');
+    uploaded = null;
     showMessage(notice, '“' + name + '” saved' + (values.is_visible ? ' and visible on the website.' : ' as a hidden product.'), 'success');
     resetProductForm();
     await loadProducts();
   } catch (error) {
+    if (uploaded) await removeProductImage(uploaded.url);
     showMessage(notice, (error.message || 'This product could not be saved.') + ' Your changes are still in the form. Please try again.', 'error');
   } finally {
     setBusy($('saveButton'), false);
-    $('cancelEdit').disabled = false;
     $('addProduct').disabled = false;
     $('productImage').disabled = false;
   }
@@ -472,7 +588,7 @@ $('deleteDialog').addEventListener('close', async () => {
   try {
     const {error} = await db.from('products').delete().eq('id', product.id);
     if (error) throw error;
-    if ($('productId').value === String(product.id)) resetProductForm();
+    await removeProductImage(product.image_url);
     showMessage(notice, '“' + product.name + '” deleted from the collection.', 'success');
     await loadProducts();
   } catch {
@@ -491,7 +607,7 @@ $('productDescription').addEventListener('input', updateDescriptionCount);
 $('productImage').addEventListener('change', () => {
   $('productImage').setCustomValidity('');
   const file = $('productImage').files[0];
-  if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024 || !file.size)) {
+  if (!validProductImage(file)) {
     $('productImage').setCustomValidity('Choose a JPEG, PNG, or WebP image smaller than 3 MB.');
     $('productImage').reportValidity();
     return;
@@ -501,7 +617,6 @@ $('productImage').addEventListener('change', () => {
 $('productSearch').addEventListener('input', renderProducts);
 $('visibilityFilter').addEventListener('change', renderProducts);
 $('subscriberSearch').addEventListener('input', renderSubscribers);
-$('cancelEdit').addEventListener('click', () => { resetProductForm(); focusEditor(); });
 $('addProduct').addEventListener('click', () => { resetProductForm(); focusEditor(); });
 const tabs = [...document.querySelectorAll('[data-tab]')];
 tabs.forEach((tab, index) => {

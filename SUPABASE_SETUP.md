@@ -56,3 +56,13 @@ The Hero is a single record with UUID `00000000-0000-4000-8000-000000000001`; a 
 Each image replacement receives a unique filename to avoid stale browser/CDN caches. Leaving the upload field empty preserves the current image. Failed saves attempt to remove the newly uploaded file, while previously published images are retained to avoid breaking cached pages. Unused older images can be removed manually from **Storage → hero_images** after checking that their URLs are no longer used.
 
 Verify an empty-table fallback, first save, text-only updates, image replacement, an invalid upload, a failed image URL, and sign-out/sign-in. Also verify that an anonymous visitor and a signed-in account not present in `admin_users` cannot modify `hero_content` or upload/delete objects in `hero_images`. The bucket is public: do not upload private or sensitive images. Existing broad Storage policies can grant additional access, so review any pre-existing policies that apply to all buckets.
+
+## Editing products
+
+Every product in the admin collection, including the built-in Roots 01–04 cards, now has an **Edit** button. It opens a dialog where you can change the product title, description, visibility (Visible/Hidden), and image. Leave the image field empty to keep the current image, or choose a JPEG, PNG, or WebP image up to 3 MB to replace it. **Save Changes** updates the product in Supabase and refreshes the collection list.
+
+1. In the Supabase **SQL Editor**, run the entire contents of `supabase/products.sql` (after `schema.sql`). It is rerunnable. It adds a `website_key` column linking saved products to the built-in storefront cards, a trigger that keeps `updated_at` current, a `hidden_website_product_keys()` function, and the public `product_images` storage bucket with admin-only write policies.
+2. New and replacement product images are uploaded to the `product_images` bucket. When an image is replaced, the old file is deleted from the bucket after the database update succeeds. If the save fails, the newly uploaded file is removed. Images uploaded earlier through Netlify Blobs keep working and are left in place.
+3. When you edit a built-in Roots card for the first time, a matching product record is created with its `website_key` (for example `roots-01`). From then on, the storefront shows the edited title, description, and image for that card, or hides the card if it is set to Hidden. Deleting that record restores the original card.
+
+The storefront (`assets/collection.js`) now also loads visible products from Supabase: edited Roots cards are updated in place, and products added in the admin appear after them. If Supabase is unavailable, the original static collection remains visible.

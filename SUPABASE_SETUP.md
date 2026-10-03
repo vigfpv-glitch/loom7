@@ -34,6 +34,8 @@ Deploy a preview of `feature/admin-panel` before merging. Test that public visit
 
 ## Product image uploads
 
+The admin collection also displays Roots 01–04 directly from the existing storefront, including their uploaded images and descriptions. These website products participate in search, visibility filtering, and collection counts, and are marked read-only with a link to the website. They are not copied into the database, so deploying this change does not require importing or re-uploading them. Existing database products retain their edit and delete controls; matching names and image URLs are shown only once. If either source fails to load, the other remains available with a warning and a reload button.
+
 In the admin product form, choose a JPEG, PNG, or WebP image up to 3 MB. A preview appears before saving. Saving uploads the image to Netlify Blobs and stores its public image URL with the product. Editing a product without choosing a replacement keeps its existing image, including older externally hosted images. Uploads require the existing signed-in, allowlisted Supabase admin account; image files are publicly readable for the storefront.
 
 Netlify installs the dependencies in `package.json` and deploys the image function from `netlify/functions`. Image storage is provisioned automatically and persists across deploys. The upload function uses the same Supabase project as the current admin page; update its project URL too if moving to another Supabase project. No storage bucket or additional secret key is required.

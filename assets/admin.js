@@ -6,6 +6,7 @@ const notice = $('notice');
 const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, character => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]));
 let db = null;
 let products = [];
+let productLoadVersion = 0;
 let subscribers = [];
 let pendingDelete = null;
 let currentImageUrl = '';
@@ -31,6 +32,7 @@ function showAuth() {
   appView.classList.add('hidden');
   $('signout').classList.add('hidden');
   products = [];
+  productLoadVersion += 1;
   subscribers = [];
   $('productsList').replaceChildren();
   $('subscribersList').replaceChildren();
@@ -40,6 +42,8 @@ function showAuth() {
   $('productSearch').value = '';
   $('subscriberSearch').value = '';
   $('visibilityFilter').value = 'all';
+  $('collectionNotice').classList.add('hidden');
+  $('collectionRetry').classList.add('hidden');
   resetProductForm();
   heroLoadVersion += 1;
   heroLoaded = false;
@@ -198,24 +202,70 @@ function loadError(box, text, retry) {
   box.querySelector('button').addEventListener('click', retry);
 }
 
+async function loadWebsiteProducts() {
+  const websiteUrl = new URL('index.html', document.baseURI);
+  const response = await fetch(websiteUrl, {cache: 'no-store'});
+  if (!response.ok) throw new Error('Could not load the website collection.');
+  const website = new DOMParser().parseFromString(await response.text(), 'text/html');
+  return Array.from(website.querySelectorAll('#collection .product')).map((card, index) => {
+    const name = card.querySelector('.product-copy h3')?.textContent.trim();
+    const image = card.querySelector('.product-image img')?.getAttribute('src');
+    return {
+      id: 'website-' + index,
+      name,
+      description: card.querySelector('.product-copy p')?.textContent.trim() || '',
+      image_url: image ? new URL(image, websiteUrl).href : '',
+      is_visible: true,
+      is_website_product: true,
+    };
+  }).filter(product => product.name);
+}
+
+function mergeProducts(savedProducts, websiteProducts) {
+  return savedProducts.concat(websiteProducts.filter(websiteProduct => !savedProducts.some(product =>
+    product.name.trim().toLowerCase() === websiteProduct.name.toLowerCase()
+    && safeImage(product.image_url) === safeImage(websiteProduct.image_url))));
+}
+
 async function loadProducts() {
+  const version = ++productLoadVersion;
   const box = $('productsList');
+  $('collectionNotice').classList.add('hidden');
+  $('collectionRetry').classList.add('hidden');
   loading(box, 'Loading your collection…');
   try {
-    const {data, error} = await db.from('products').select('*').order('created_at', {ascending: false});
-    if (error) throw error;
-    products = data || [];
+    const [saved, website] = await Promise.allSettled([
+      (async () => {
+        const {data, error} = await db.from('products').select('*').order('created_at', {ascending: false});
+        if (error) throw error;
+        return data || [];
+      })(),
+      loadWebsiteProducts(),
+    ]);
+    if (version !== productLoadVersion) return;
+    if (saved.status === 'rejected' && website.status === 'rejected') throw new Error('Collection unavailable.');
+    products = mergeProducts(saved.status === 'fulfilled' ? saved.value : [], website.status === 'fulfilled' ? website.value : []);
     $('totalProducts').textContent = products.length;
     $('visibleProducts').textContent = products.filter(product => product.is_visible).length;
     renderProducts();
+    if (saved.status === 'rejected' || website.status === 'rejected') {
+      showMessage($('collectionNotice'), saved.status === 'rejected'
+        ? 'Showing the website collection. Saved admin products could not be loaded.'
+        : 'Showing saved admin products. The website collection could not be loaded.', 'error');
+      $('collectionRetry').classList.remove('hidden');
+    }
   } catch {
+    if (version !== productLoadVersion) return;
     loadError(box, 'Your collection could not be loaded. Please try again.', loadProducts);
   }
 }
 
+$('collectionRetry').addEventListener('click', loadProducts);
+
 function safeImage(value) {
+  if (!value) return '';
   try {
-    const url = new URL(value);
+    const url = new URL(value, document.baseURI);
     return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
   } catch {
     return '';
@@ -237,7 +287,10 @@ function renderProducts() {
     const image = safeImage(product.image_url);
     const name = escapeHtml(product.name);
     const id = escapeHtml(product.id);
-    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span></td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions"><button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button><button type="button" class="btn danger" data-delete="' + id + '" aria-label="Delete ' + name + '">Delete</button></div></td></tr>';
+    const actions = product.is_website_product
+      ? '<a class="btn" href="index.html#collection" target="_blank" rel="noopener" aria-label="View ' + name + ' on the website">View on website</a>'
+      : '<button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button><button type="button" class="btn danger" data-delete="' + id + '" aria-label="Delete ' + name + '">Delete</button>';
+    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product · read-only</span>' : '') + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
   }).join('') + '</tbody></table>';
   box.querySelectorAll('img').forEach(image => image.addEventListener('error', () => {
     const placeholder = document.createElement('span');

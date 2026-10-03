@@ -8,7 +8,8 @@ let db = null;
 let products = [];
 let subscribers = [];
 let pendingDelete = null;
-let previewTimer;
+let currentImageUrl = '';
+let previewObjectUrl = '';
 
 function showMessage(node, text, type = '') {
   node.textContent = text;
@@ -152,16 +153,19 @@ function renderSubscribers() {
 }
 
 function updatePreview() {
-  const value = $('productImage').value.trim();
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = '';
+  const file = $('productImage').files[0];
+  if (file) previewObjectUrl = URL.createObjectURL(file);
+  const url = previewObjectUrl || safeImage(currentImageUrl);
   const image = $('previewImage');
-  const url = safeImage(value);
-  $('imagePreview').classList.toggle('hidden', !value);
+  $('imagePreview').classList.toggle('hidden', !url);
   image.hidden = true;
   image.removeAttribute('src');
-  $('previewStatus').textContent = url ? 'Loading image preview…' : 'Enter a valid HTTP or HTTPS image URL.';
+  $('previewStatus').textContent = url ? 'Loading image preview…' : '';
   if (url) {
     image.onload = () => { image.hidden = false; $('previewStatus').textContent = 'Product image preview'; };
-    image.onerror = () => { image.hidden = true; $('previewStatus').textContent = 'Image could not be loaded. Check the URL before saving.'; };
+    image.onerror = () => { image.hidden = true; $('previewStatus').textContent = 'Image could not be loaded. Choose another image.'; };
     image.referrerPolicy = 'no-referrer';
     image.src = url;
   }
@@ -180,7 +184,9 @@ function editProduct(product) {
   $('productId').value = product.id;
   $('productName').value = product.name;
   $('productDescription').value = product.description || '';
-  $('productImage').value = product.image_url || '';
+  $('productImage').value = '';
+  $('productImage').setCustomValidity('');
+  currentImageUrl = product.image_url || '';
   $('productVisible').checked = product.is_visible;
   $('formHeading').textContent = 'Edit product';
   $('cancelEdit').classList.remove('hidden');
@@ -196,7 +202,7 @@ function resetProductForm() {
   $('formHeading').textContent = 'Add a product';
   $('cancelEdit').classList.add('hidden');
   $('productImage').setCustomValidity('');
-  clearTimeout(previewTimer);
+  currentImageUrl = '';
   updateDescriptionCount();
   updatePreview();
 }
@@ -234,25 +240,45 @@ $('productForm').addEventListener('submit', async event => {
   event.preventDefault();
   const name = $('productName').value.trim();
   if (!name) { $('productName').setCustomValidity('Enter a product name.'); $('productName').reportValidity(); return; }
-  const image = $('productImage').value.trim();
-  if (image && !safeImage(image)) { $('productImage').setCustomValidity('Use an HTTP or HTTPS image URL.'); $('productImage').reportValidity(); return; }
+  const file = $('productImage').files[0];
   const id = $('productId').value;
-  const values = {name, description: $('productDescription').value.trim() || null, image_url: image || null, is_visible: $('productVisible').checked};
+  const values = {name, description: $('productDescription').value.trim() || null, image_url: currentImageUrl || null, is_visible: $('productVisible').checked};
   setBusy($('saveButton'), true, 'Saving…');
   $('cancelEdit').disabled = true;
   $('addProduct').disabled = true;
+  $('productImage').disabled = true;
   try {
+    if (file) {
+      $('saveButton').textContent = 'Uploading image…';
+      const {data, error} = await db.auth.getSession();
+      if (error || !data.session) throw new Error('Please sign in again before uploading an image.');
+      const body = new FormData();
+      body.append('image', file);
+      const response = await fetch('/.netlify/functions/product-image', {
+        method: 'POST',
+        headers: {Authorization: 'Bearer ' + data.session.access_token, apikey: SUPABASE_ANON_KEY},
+        body,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Image upload failed. Please try again.');
+      currentImageUrl = result.url;
+      values.image_url = currentImageUrl;
+      $('productImage').value = '';
+      updatePreview();
+      $('saveButton').textContent = 'Saving…';
+    }
     const result = id ? await db.from('products').update(values).eq('id', id) : await db.from('products').insert(values);
     if (result.error) throw result.error;
     showMessage(notice, '“' + name + '” saved' + (values.is_visible ? ' and visible on the website.' : ' as a hidden product.'), 'success');
     resetProductForm();
     await loadProducts();
-  } catch {
-    showMessage(notice, 'This product could not be saved. Your changes are still in the form. Please try again.', 'error');
+  } catch (error) {
+    showMessage(notice, (error.message || 'This product could not be saved.') + ' Your changes are still in the form. Please try again.', 'error');
   } finally {
     setBusy($('saveButton'), false);
     $('cancelEdit').disabled = false;
     $('addProduct').disabled = false;
+    $('productImage').disabled = false;
   }
 });
 
@@ -279,10 +305,15 @@ $('togglePassword').addEventListener('click', () => {
 });
 $('productName').addEventListener('input', () => $('productName').setCustomValidity(''));
 $('productDescription').addEventListener('input', updateDescriptionCount);
-$('productImage').addEventListener('input', () => {
+$('productImage').addEventListener('change', () => {
   $('productImage').setCustomValidity('');
-  clearTimeout(previewTimer);
-  previewTimer = setTimeout(updatePreview, 350);
+  const file = $('productImage').files[0];
+  if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024 || !file.size)) {
+    $('productImage').setCustomValidity('Choose a JPEG, PNG, or WebP image smaller than 3 MB.');
+    $('productImage').reportValidity();
+    return;
+  }
+  updatePreview();
 });
 $('productSearch').addEventListener('input', renderProducts);
 $('visibilityFilter').addEventListener('change', renderProducts);

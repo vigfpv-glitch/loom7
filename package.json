@@ -1,0 +1,8 @@
+{
+  "name": "loom7-site",
+  "private": true,
+  "dependencies": {
+    "@netlify/blobs": "^10.0.0",
+    "@netlify/functions": "^5.0.0"
+  }
+}

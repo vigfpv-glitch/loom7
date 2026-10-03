@@ -66,6 +66,8 @@ button,a,input,textarea,select{ -webkit-tap-highlight-color:transparent}
 .field input:focus,.field textarea:focus,.toolbar input:focus,.toolbar select:focus{border-color:var(--accent)}
 input::placeholder,textarea::placeholder{color:#84867a;font-size:12px}
 .field textarea{min-height:116px}
+.field input[type="file"]{font-size:12px;padding:8px}
+.field input[type="file"]::file-selector-button{font:inherit;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:7px 12px;margin-right:12px;cursor:pointer}
 .check{padding:16px 0;margin:6px 0 22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);align-items:flex-start;color:var(--ink);cursor:pointer}
 .check input{accent-color:var(--accent);width:17px;height:17px;flex-shrink:0;margin:3px 2px 0 0}
 .check small{display:block;font-size:10px;color:var(--muted);margin-top:3px}

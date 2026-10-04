@@ -624,6 +624,124 @@ p {
 }
 
 /* ============================================
+   PRODUCT DETAILS
+   ============================================ */
+
+.product-detail-section {
+  min-height: 65vh;
+}
+
+.product-detail-back {
+  display: inline-block;
+  margin-bottom: var(--space-8);
+  color: var(--color-muted);
+  font-size: var(--text-md);
+}
+
+.product-detail-back::before {
+  content: '←';
+  margin-right: var(--space-2);
+}
+
+.product-detail-back:hover {
+  color: var(--color-accent);
+}
+
+.product-detail-status {
+  max-width: var(--container-max);
+  margin: var(--space-10) auto;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.product-detail-status.is-error {
+  color: #8b302b;
+}
+
+.product-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  align-items: start;
+  gap: clamp(var(--space-10), 5vw, var(--space-24));
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+.product-detail-layout[hidden] {
+  display: none;
+}
+
+.product-detail-gallery {
+  min-width: 0;
+}
+
+.product-detail-image {
+  display: block;
+  aspect-ratio: 4 / 5;
+  max-height: 780px;
+  background: var(--color-sand);
+  overflow: hidden;
+}
+
+.product-detail-image::after {
+  display: none;
+}
+
+.product-detail-image.is-fallback::after {
+  display: block;
+}
+
+.product-detail-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-detail-copy {
+  padding-top: var(--space-4);
+}
+
+.product-detail-copy h1 {
+  margin: var(--space-5) 0 var(--space-3);
+  font: 500 clamp(30px, 3vw, 42px) / var(--leading-snug) var(--font-display);
+  letter-spacing: var(--tracking-tight);
+}
+
+.product-detail-price {
+  margin: 0 0 var(--space-7);
+  font-size: var(--text-4xl);
+}
+
+.product-detail-description {
+  margin: 0 0 var(--space-10);
+  color: var(--color-muted);
+  line-height: var(--leading-loose);
+}
+
+.product-fit-note {
+  margin: var(--space-10) 0 var(--space-12);
+  padding: var(--space-8) 0;
+  border-top: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.product-fit-note h2 {
+  margin: 0 0 var(--space-3);
+  font: 500 var(--text-3xl) / var(--leading-normal) var(--font-display);
+}
+
+.product-fit-note p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-md);
+}
+
+.product-detail-cta {
+  min-height: 52px;
+}
+
+/* ============================================
    PRODUCT GRID
    ============================================ */
 
@@ -1373,6 +1491,19 @@ p {
   }
   .section {
     padding: var(--space-16) 6vw;
+  }
+
+  .product-detail-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-10);
+  }
+
+  .product-detail-copy {
+    padding-top: 0;
+  }
+
+  .product-detail-cta {
+    width: 100%;
   }
 
   .grid {

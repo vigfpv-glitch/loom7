@@ -21,6 +21,13 @@
     style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2,
   });
 
+  function productDetailUrl(product) {
+    const identifier = product.website_key
+      ? `key=${encodeURIComponent(product.website_key)}`
+      : `id=${encodeURIComponent(product.id)}`;
+    return `product.html?${identifier}`;
+  }
+
   function safeImage(value) {
     if (!value) return '';
     try {
@@ -34,13 +41,16 @@
   function applyProduct(card, product) {
     const name = product.name;
     const description = product.description || '';
-    const message = `Hi Loom7, I'm interested in ${name}.`;
     const alt = `${name} — Loom7 collection look`;
     const link = card.querySelector('.product-card');
-    link.dataset.instagramProduct = name;
-    link.dataset.message = message;
-    link.setAttribute('aria-label', `Message Loom7 about ${name} on Instagram`);
+    link.href = productDetailUrl(product);
+    link.removeAttribute('target');
+    link.removeAttribute('rel');
+    link.removeAttribute('data-instagram-product');
+    link.removeAttribute('data-message');
+    link.setAttribute('aria-label', `View details for ${name}`);
     card.querySelector('.product-copy h3').textContent = name;
+    card.querySelector('.product-link').textContent = 'View product details';
     const price = product.price === null || product.price === undefined || product.price === ''
       ? null : Number(product.price);
     const priceLabel = card.querySelector('.product-price');
@@ -83,6 +93,18 @@
     applyProduct(card, product);
     return card;
   }
+
+  grid.querySelectorAll('.product[data-product-key]').forEach(card => {
+    const link = card.querySelector('.product-card');
+    const name = card.querySelector('.product-copy h3').textContent;
+    link.href = productDetailUrl({website_key: card.dataset.productKey});
+    link.removeAttribute('target');
+    link.removeAttribute('rel');
+    link.removeAttribute('data-instagram-product');
+    link.removeAttribute('data-message');
+    link.setAttribute('aria-label', `View details for ${name}`);
+    card.querySelector('.product-link').textContent = 'View product details';
+  });
 
   function setupProductVisibility() {
     const cards = [...grid.querySelectorAll('.product')];

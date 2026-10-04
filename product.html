@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#211f1b">
+  <meta name="robots" content="index,follow">
+  <meta name="author" content="Loom7">
+  <meta name="description" content="Explore a Loom7 piece and message us about sizes, fit, price, and availability.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Loom7">
+  <meta property="og:title" content="Product details | Loom7">
+  <meta property="og:description" content="Explore a Loom7 piece and message us about sizes, fit, price, and availability.">
+  <meta property="og:image" content="LOOM7_logo_transparent.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Product details | Loom7</title>
+  <link rel="icon" type="image/png" href="LOOM7_logo_transparent.png">
+  <link rel="apple-touch-icon" href="LOOM7_logo_transparent.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <div class="topbar">New season · New essentials · Shop the Loom7 edit</div>
+  <header class="nav">
+    <a class="logo" href="index.html#home" aria-label="Loom7 home"><img src="LOOM7_logo_transparent.png" alt="LOOM7 — Timeless, Thoughtfully Made" width="859" height="598"></a>
+    <nav class="navlinks" aria-label="Main navigation">
+      <a href="index.html#home">Home</a>
+      <a href="collection.html">Collection</a>
+      <a href="index.html#story">About</a>
+      <a href="index.html#how-to-order">How to order</a>
+    </nav>
+    <a class="nav-cta" href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Shop via Instagram</a>
+  </header>
+  <main id="main-content">
+    <section class="section product-detail-section" aria-labelledby="product-detail-title">
+      <a class="product-detail-back" href="collection.html">Back to collection</a>
+      <p class="product-detail-status" data-product-status role="status" aria-live="polite">Loading product details…</p>
+      <div class="product-detail-layout" data-product-detail hidden>
+        <div class="product-detail-gallery">
+          <div class="media product-detail-image" data-product-media data-fallback="Loom7 collection">
+            <img data-product-image alt="">
+          </div>
+        </div>
+        <div class="product-detail-copy">
+          <div class="collection-label">ROOTS — COLLECTION 01</div>
+          <h1 id="product-detail-title" data-product-name></h1>
+          <p class="product-detail-price product-price" data-product-price hidden></p>
+          <p class="product-detail-description" data-product-description></p>
+          <div class="product-fit-note">
+            <h2>Size &amp; fit</h2>
+            <p>Message us for current sizes, fit guidance, price, and availability.</p>
+          </div>
+          <a class="button product-detail-cta" data-product-message href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Message us about this piece</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <a class="footer-brand" href="index.html#home" aria-label="Loom7 — back to top"><img src="LOOM7_logo_transparent.png" alt="LOOM7 — Timeless, Thoughtfully Made" width="859" height="598"></a>
+    <span>© <span id="year"></span> Loom7. All rights reserved.</span>
+    <div class="footer-links">
+      <a href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Instagram @loom7.co</a>
+      <a href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Order via DM</a>
+    </div>
+    <a class="footer-top" href="#main-content" aria-label="Back to product details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></a>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+  <script src="assets/product-detail.js"></script>
+</body>
+</html>

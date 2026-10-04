@@ -1,5 +1,9 @@
 (() => {
   const defaults = Object.freeze({
+    title: 'Timeless styles for modern you',
+    subtitle: 'Clothing made for the way you move through every day. Explore The Roots collection and message us on Instagram to order.',
+    cta_text: 'Order via Instagram DM',
+    cta_link: 'https://ig.me/m/loom7.co',
     image_url: 'https://raw.githubusercontent.com/vigfpv-glitch/hero-img/main/pomelli_photoshoot_image_4k_0904.png',
   });
   const id = '00000000-0000-4000-8000-000000000001';
@@ -13,10 +17,21 @@
     }
   }
 
-  window.Loom7Hero = {defaults, id, safeUrl};
+  function normalize(content = {}) {
+    return {
+      title: typeof content.title === 'string' && content.title.trim() ? content.title : defaults.title,
+      subtitle: typeof content.subtitle === 'string' ? content.subtitle : defaults.subtitle,
+      cta_text: typeof content.cta_text === 'string' && content.cta_text.trim() ? content.cta_text : defaults.cta_text,
+      cta_link: safeUrl(content.cta_link) || defaults.cta_link,
+      image_url: safeUrl(content.image_url) || defaults.image_url,
+    };
+  }
 
+  window.Loom7Hero = {defaults, id, safeUrl, normalize};
+
+  const title = document.getElementById('hero-title');
   const image = document.getElementById('hero-image');
-  if (!image || !window.supabase) return;
+  if (!title || !image || !window.supabase) return;
 
   image.onerror = () => {
     if (image.getAttribute('src') !== defaults.image_url) {
@@ -29,14 +44,28 @@
 
   async function loadHero() {
     try {
-      const image_url = defaults.image_url;
-      if (image_url !== image.getAttribute('src')) {
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
+      });
+      const {data, error} = await client.from('hero_content')
+        .select('title, subtitle, cta_text, cta_link, image_url').eq('id', id).maybeSingle();
+      if (error) throw error;
+      if (!data) return;
+      const content = normalize(data);
+      title.textContent = content.title;
+      const subtitle = document.getElementById('hero-subtitle');
+      subtitle.textContent = content.subtitle;
+      subtitle.hidden = !content.subtitle;
+      const button = document.getElementById('hero-cta');
+      button.textContent = content.cta_text;
+      button.href = content.cta_link;
+      if (content.image_url !== image.getAttribute('src')) {
         image.hidden = false;
         image.parentElement.classList.remove('is-fallback');
-        image.src = image_url;
+        image.src = content.image_url;
       }
-    } catch {
-      return;
+    } catch (error) {
+      console.warn('Could not load published Hero Section content.', error);
     }
   }
 

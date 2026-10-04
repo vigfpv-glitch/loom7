@@ -109,9 +109,10 @@ async function loadHeroContent() {
     heroLoaded = true;
     $('heroFields').disabled = false;
     showMessage($('heroNotice'), data ? 'Your published Hero Section is ready to edit.' : 'The website currently uses its default Hero Section. Save to publish your changes.');
-  } catch {
+  } catch (error) {
     if (version !== heroLoadVersion) return;
-    showMessage($('heroNotice'), 'Could not load the Hero Section. Run supabase/hero.sql in your Supabase SQL Editor, then try again.', 'error');
+    const detail = error && typeof error.message === 'string' ? error.message : String(error);
+    showMessage($('heroNotice'), 'Could not load the Hero Section: ' + detail + '. If the hero_content table is missing, run supabase/hero.sql in your Supabase SQL Editor, then try again.', 'error');
     $('heroRetry').classList.remove('hidden');
   } finally {
     if (version === heroLoadVersion) $('heroForm').setAttribute('aria-busy', 'false');
@@ -166,11 +167,19 @@ $('heroForm').addEventListener('submit', async event => {
     $('heroUpload').value = '';
     updateHeroPreview();
     showMessage($('heroNotice'), 'Hero Section saved. Reload the website to see your changes.', 'success');
-  } catch {
+  } catch (error) {
     if (uploadedPath) {
-      try { await db.storage.from('hero_images').remove([uploadedPath]); } catch {}
+      try {
+        const {error: cleanupError} = await db.storage.from('hero_images').remove([uploadedPath]);
+        if (cleanupError) console.warn('Could not remove the unpublished Hero image upload.', cleanupError);
+      } catch (cleanupError) {
+        console.warn('Could not remove the unpublished Hero image upload.', cleanupError);
+      }
     }
-    if (version === heroLoadVersion) showMessage($('heroNotice'), 'Could not save the Hero Section. Check your connection, admin access, and hero.sql setup. Your changes remain in the form.', 'error');
+    if (version === heroLoadVersion) {
+      const detail = error && typeof error.message === 'string' ? error.message : String(error);
+      showMessage($('heroNotice'), 'Could not save the Hero Section: ' + detail + '. Your changes remain in the form.', 'error');
+    }
   } finally {
     setBusy($('heroSave'), false);
     if (version === heroLoadVersion) {

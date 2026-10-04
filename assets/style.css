@@ -577,12 +577,15 @@ p {
   display: block;
   width: 100%;
   min-height: 52px;
+  padding: var(--space-3) var(--space-6);
   border: 1px solid var(--color-ink);
   background: var(--color-ink);
   color: var(--color-white);
   cursor: pointer;
   font-size: var(--text-lg);
   font-weight: 700;
+  line-height: var(--leading-normal);
+  text-align: center;
   transition: background var(--transition-base),
               border-color var(--transition-base);
 }

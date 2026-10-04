@@ -94,9 +94,7 @@
       });
 
       if (countLabel) {
-        countLabel.textContent = loadMoreButton
-          ? `You have viewed ${visibleCount} of ${cards.length} products`
-          : `Showing ${visibleCount ? 1 : 0}–${visibleCount} of ${cards.length} pieces`;
+        countLabel.textContent = `You have viewed ${visibleCount} of ${cards.length} products`;
       }
       if (progress) {
         progress.max = Math.max(cards.length, 1);

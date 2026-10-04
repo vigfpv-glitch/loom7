@@ -12,6 +12,7 @@ create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(name) between 1 and 120),
   description text check (description is null or char_length(description) <= 1000),
+  price numeric(10,2) check (price is null or price >= 0),
   image_url text check (image_url is null or char_length(image_url) <= 1000),
   is_visible boolean not null default true,
   created_at timestamptz not null default now(),

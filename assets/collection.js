@@ -3,6 +3,9 @@
   if (!grid || !window.supabase) return;
   const template = grid.querySelector('.product[data-product-key]')?.cloneNode(true);
   if (!template) return;
+  const priceFormatter = new Intl.NumberFormat('en-IN', {
+    style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2,
+  });
 
   function safeImage(value) {
     if (!value) return '';
@@ -24,7 +27,13 @@
     link.dataset.message = message;
     link.setAttribute('aria-label', `Message Loom7 about ${name} on Instagram`);
     card.querySelector('.product-copy h3').textContent = name;
-    card.querySelector('.product-copy p').textContent = description;
+    const price = product.price === null || product.price === undefined || product.price === ''
+      ? null : Number(product.price);
+    const priceLabel = card.querySelector('.product-price');
+    priceLabel.hidden = !Number.isFinite(price) || price < 0;
+    priceLabel.textContent = priceLabel.hidden ? '' : priceFormatter.format(price);
+    card.querySelector('.quick-view').dataset.price = priceLabel.hidden ? '' : priceLabel.textContent;
+    card.querySelector('.product-copy p:not(.product-price)').textContent = description;
     const media = card.querySelector('.product-image');
     media.dataset.fallback = name;
     const image = media.querySelector('img');
@@ -54,7 +63,7 @@
         auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
       });
       const [visible, hidden] = await Promise.all([
-        client.from('products').select('id, name, description, image_url, website_key')
+        client.from('products').select('id, name, description, price, image_url, website_key')
           .eq('is_visible', true).order('created_at', {ascending: true}),
         client.rpc('hidden_website_product_keys'),
       ]);

@@ -583,6 +583,14 @@ p {
   color: var(--color-ink);
 }
 
+.product-copy .product-price,
+.quick-view-price {
+  color: var(--color-ink);
+  font-size: var(--text-md);
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
 .product-copy p {
   font-size: var(--text-md);
   color: var(--color-muted);
@@ -1463,6 +1471,3 @@ p {
     transform: translateY(0);
   }
 }
-
-
-

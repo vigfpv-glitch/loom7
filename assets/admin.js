@@ -18,6 +18,9 @@ let currentHeroImage = window.Loom7Hero.defaults.image_url;
 let heroPreviewObjectUrl = '';
 let heroLoaded = false;
 let heroLoadVersion = 0;
+const priceFormatter = new Intl.NumberFormat('en-IN', {
+  style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2,
+});
 
 function showMessage(node, text, type = '') {
   node.textContent = text;
@@ -227,7 +230,8 @@ async function loadWebsiteProducts() {
       id: 'website-' + card.dataset.productKey,
       website_key: card.dataset.productKey,
       name,
-      description: card.querySelector('.product-copy p')?.textContent.trim() || '',
+      description: card.querySelector('.product-copy p:not(.product-price)')?.textContent.trim() || '',
+      price: null,
       image_url: image || '',
       is_visible: true,
       is_website_product: true,
@@ -291,20 +295,23 @@ function renderProducts() {
   const box = $('productsList');
   const search = $('productSearch').value.trim().toLowerCase();
   const visibility = $('visibilityFilter').value;
-  const filtered = products.filter(product => (product.name + ' ' + (product.description || '')).toLowerCase().includes(search) && (visibility === 'all' || Boolean(product.is_visible) === (visibility === 'visible')));
+  const filtered = products.filter(product => (product.name + ' ' + (product.description || '') + ' ' + (product.price ?? '')).toLowerCase().includes(search) && (visibility === 'all' || Boolean(product.is_visible) === (visibility === 'visible')));
   box.setAttribute('aria-busy', 'false');
   $('productCount').textContent = filtered.length + (filtered.length !== products.length ? ' / ' + products.length : '');
   if (!filtered.length) {
     box.innerHTML = '<div class="empty"><strong>' + (products.length ? 'No matching pieces.' : 'Your collection starts here.') + '</strong><p>' + (products.length ? 'Try another search or change the visibility filter.' : 'Add your first product using the collection details form.') + '</p></div>';
     return;
   }
-  box.innerHTML = '<table><caption class="sr-only">Products in your collection</caption><thead><tr><th scope="col">Image</th><th scope="col">Product</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>' + filtered.map(product => {
+  box.innerHTML = '<table><caption class="sr-only">Products in your collection</caption><thead><tr><th scope="col">Image</th><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>' + filtered.map(product => {
     const image = safeImage(product.image_url);
     const name = escapeHtml(product.name);
     const id = escapeHtml(product.id);
+    const price = product.price === null || product.price === undefined || product.price === ''
+      ? null : Number(product.price);
+    const priceText = Number.isFinite(price) && price >= 0 ? escapeHtml(priceFormatter.format(price)) : '—';
     const actions = '<button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button>'
       + (product.is_website_product ? '' : '<button type="button" class="btn danger" data-delete="' + id + '" aria-label="Delete ' + name + '">Delete</button>');
-    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
+    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td>' + priceText + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
   }).join('') + '</tbody></table>';
   box.querySelectorAll('img').forEach(image => image.addEventListener('error', () => {
     const placeholder = document.createElement('span');
@@ -443,6 +450,7 @@ function openEditDialog(product) {
   $('editImage').setCustomValidity('');
   $('editName').value = product.name;
   $('editDescription').value = product.description || '';
+  $('editPrice').value = product.price ?? '';
   $('editVisibility').value = product.is_visible ? 'visible' : 'hidden';
   $('editHeading').textContent = 'Edit “' + product.name + '”';
   $('editNotice').classList.add('hidden');
@@ -471,6 +479,7 @@ $('editForm').addEventListener('submit', async event => {
   $('editImage').setCustomValidity(validProductImage(file) ? '' : 'Choose a JPEG, PNG, or WebP image smaller than 3 MB.');
   if (!$('editForm').reportValidity()) return;
   const values = {name, description: $('editDescription').value.trim() || null,
+    price: $('editPrice').value === '' ? null : Number($('editPrice').value),
     image_url: product.image_url || null, is_visible: $('editVisibility').value === 'visible'};
   let uploaded = null;
   editSaving = true;
@@ -487,7 +496,7 @@ $('editForm').addEventListener('submit', async event => {
     const result = product.is_website_product
       ? await db.from('products').upsert({...values, website_key: product.website_key}, {onConflict: 'website_key'}).select('id')
       : await db.from('products').update(values).eq('id', product.id).select('id');
-    if (result.error) throw new Error('This product could not be saved.');
+    if (result.error) throw result.error;
     if (!result.data?.length) throw new Error('This product no longer exists or you no longer have access to it.');
     if (uploaded && product.image_url !== uploaded.url) await removeProductImage(product.image_url);
     uploaded = null;
@@ -561,8 +570,12 @@ $('productForm').addEventListener('submit', async event => {
   event.preventDefault();
   const name = $('productName').value.trim();
   if (!name) { $('productName').setCustomValidity('Enter a product name.'); $('productName').reportValidity(); return; }
+  $('productName').setCustomValidity('');
+  if (!$('productForm').reportValidity()) return;
   const file = $('productImage').files[0];
-  const values = {name, description: $('productDescription').value.trim() || null, image_url: currentImageUrl || null, is_visible: $('productVisible').checked};
+  const values = {name, description: $('productDescription').value.trim() || null,
+    price: $('productPrice').value === '' ? null : Number($('productPrice').value),
+    image_url: currentImageUrl || null, is_visible: $('productVisible').checked};
   let uploaded = null;
   setBusy($('saveButton'), true, 'Saving…');
   $('addProduct').disabled = true;
@@ -575,7 +588,7 @@ $('productForm').addEventListener('submit', async event => {
       $('saveButton').textContent = 'Saving…';
     }
     const result = await db.from('products').insert(values);
-    if (result.error) throw new Error('This product could not be saved.');
+    if (result.error) throw result.error;
     uploaded = null;
     showMessage(notice, '“' + name + '” saved' + (values.is_visible ? ' and visible on the website.' : ' as a hidden product.'), 'success');
     resetProductForm();

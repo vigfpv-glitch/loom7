@@ -535,22 +535,22 @@ p {
 }
 
 .collection-count {
-  margin: var(--space-12) 0 0;
+  margin: var(--space-8) 0 0;
   color: var(--color-ink);
-  font-size: clamp(var(--text-2xl), 3vw, var(--text-5xl));
+  font-size: clamp(var(--text-2xl), 2vw, var(--text-4xl));
   line-height: var(--leading-snug);
 }
 
 .collection-load-more {
-  max-width: 912px;
-  margin: var(--space-12) auto 0;
+  max-width: 760px;
+  margin: var(--space-10) auto 0;
 }
 
 .collection-progress {
   display: block;
   width: 100%;
-  height: 18px;
-  margin: var(--space-8) 0 var(--space-5);
+  height: 12px;
+  margin: var(--space-5) 0 var(--space-4);
   overflow: hidden;
   appearance: none;
   border: 0;
@@ -576,12 +576,12 @@ p {
 .collection-load-button {
   display: block;
   width: 100%;
-  min-height: 72px;
+  min-height: 52px;
   border: 1px solid var(--color-ink);
   background: var(--color-ink);
   color: var(--color-white);
   cursor: pointer;
-  font-size: var(--text-2xl);
+  font-size: var(--text-lg);
   font-weight: 700;
   transition: background var(--transition-base),
               border-color var(--transition-base);

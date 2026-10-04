@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#211f1b">
+  <meta name="robots" content="index,follow">
+  <meta name="author" content="Loom7">
+  <meta name="description" content="Explore the full Loom7 Roots collection. Browse timeless styles and order directly through Instagram DM.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Loom7">
+  <meta property="og:title" content="The Roots Collection | Loom7">
+  <meta property="og:description" content="Explore the full Loom7 Roots collection and order directly through Instagram DM.">
+  <meta property="og:image" content="LOOM7_logo_transparent.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>The Roots Collection | Loom7</title>
+  <link rel="icon" type="image/png" href="LOOM7_logo_transparent.png">
+  <link rel="apple-touch-icon" href="LOOM7_logo_transparent.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <div class="topbar">New season · New essentials · Shop the Loom7 edit</div>
+  <header class="nav">
+    <a class="logo" href="index.html#home" aria-label="Loom7 home"><img src="LOOM7_logo_transparent.png" alt="LOOM7 — Timeless, Thoughtfully Made" width="859" height="598"></a>
+    <nav class="navlinks" aria-label="Main navigation">
+      <a href="index.html#home">Home</a>
+      <a href="#collection" aria-current="page">Collection</a>
+      <a href="index.html#story">About</a>
+      <a href="index.html#how-to-order">How to order</a>
+    </nav>
+    <a class="nav-cta" href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Shop via Instagram</a>
+  </header>
+  <main id="main-content">
+    <section class="section collection-section full-collection" id="collection" aria-labelledby="collection-title">
+      <div class="collection-header">
+        <div class="collection-label">ROOTS — COLLECTION 01</div>
+        <h1 id="collection-title">The Roots Collection</h1>
+        <p class="collection-intro">Explore every piece designed for the way you move through every day. Tap any item to message us directly on Instagram about availability, sizes, and pricing.</p>
+      </div>
+      <div class="grid" data-page-size="16" aria-live="polite"></div>
+      <p class="collection-status" data-collection-status role="status" hidden></p>
+      <p class="collection-count" data-collection-count aria-live="polite"></p>
+      <nav class="collection-pagination" data-collection-pagination aria-label="Collection pages" hidden></nav>
+    </section>
+  </main>
+  <footer class="footer">
+    <a class="footer-brand" href="index.html#home" aria-label="Loom7 — back to top"><img src="LOOM7_logo_transparent.png" alt="LOOM7 — Timeless, Thoughtfully Made" width="859" height="598"></a>
+    <span>© <span id="year"></span> Loom7. All rights reserved.</span>
+    <div class="footer-links">
+      <a href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Instagram @loom7.co</a>
+      <a href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Order via DM</a>
+    </div>
+    <a class="footer-top" href="#collection" aria-label="Back to collection"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></a>
+  </footer>
+  <template id="product-template">
+    <article class="product">
+      <a class="product-card" href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">
+        <span class="media product-image" data-fallback="Loom7 collection">
+          <img loading="lazy" decoding="async" alt="">
+        </span>
+        <div class="product-copy">
+          <h3></h3>
+          <p class="product-price" hidden></p>
+          <p></p>
+          <span class="product-link">Message us on Instagram</span>
+        </div>
+      </a>
+    </article>
+  </template>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+  <script src="assets/collection.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    document.addEventListener('click', (event) => {
+      const link = event.target.closest('[data-instagram-product]');
+      if (!link || !navigator.clipboard || !window.isSecureContext) return;
+      navigator.clipboard.writeText(link.dataset.message).catch(() => {});
+    });
+  </script>
+</body>
+</html>

@@ -496,6 +496,7 @@ p {
   margin-bottom: var(--space-6);
 }
 
+.collection-header h1,
 .collection-header h2 {
   font: 500 var(--text-6xl) / var(--leading-snug) var(--font-display);
   letter-spacing: var(--tracking-tight);
@@ -521,6 +522,57 @@ p {
 
 .collection-cta {
   min-height: 44px;
+}
+
+.collection-status,
+.collection-count {
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.collection-status {
+  margin: var(--space-10) 0 0;
+}
+
+.collection-count {
+  margin: var(--space-12) 0 0;
+  font-size: var(--text-md);
+}
+
+.collection-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-8) auto 0;
+}
+
+.collection-pagination[hidden] {
+  display: none;
+}
+
+.page-button {
+  min-width: 42px;
+  min-height: 42px;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-line);
+  background: transparent;
+  color: var(--color-ink);
+  cursor: pointer;
+  font-size: var(--text-md);
+}
+
+.page-button:hover,
+.page-button[aria-current="page"] {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-white);
+}
+
+.page-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* ============================================
@@ -1294,6 +1346,7 @@ p {
     margin-bottom: var(--space-4);
   }
 
+  .collection-header h1,
   .collection-header h2 {
     font-size: var(--text-5xl);
   }

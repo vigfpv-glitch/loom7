@@ -1,6 +1,6 @@
 (() => {
   const defaults = Object.freeze({
-    image_url: 'assets/hero-static.webp',
+    image_url: 'https://raw.githubusercontent.com/vigfpv-glitch/hero-img/main/pomelli_photoshoot_image_4k_0904.png',
   });
   const id = '00000000-0000-4000-8000-000000000001';
 
@@ -29,13 +29,7 @@
 
   async function loadHero() {
     try {
-      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
-      });
-      const {data, error} = await client.from('hero_content')
-        .select('image_url').eq('id', id).maybeSingle();
-      if (error || !data) return;
-      const image_url = safeUrl(data.image_url) || defaults.image_url;
+      const image_url = defaults.image_url;
       if (image_url !== image.getAttribute('src')) {
         image.hidden = false;
         image.parentElement.classList.remove('is-fallback');

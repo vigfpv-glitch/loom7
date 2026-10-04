@@ -542,6 +542,9 @@ p {
 }
 
 .collection-load-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   max-width: 760px;
   margin: var(--space-10) auto 0;
 }
@@ -574,25 +577,41 @@ p {
 }
 
 .collection-load-button {
-  display: block;
-  width: 100%;
-  min-height: 52px;
-  padding: var(--space-3) var(--space-6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-width: 220px;
+  min-height: 58px;
+  padding: var(--space-4) var(--space-8);
   border: 1px solid var(--color-ink);
+  border-radius: 999px;
   background: var(--color-ink);
   color: var(--color-white);
   cursor: pointer;
   font-size: var(--text-lg);
   font-weight: 700;
+  letter-spacing: var(--tracking-widest);
   line-height: var(--leading-normal);
   text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
   transition: background var(--transition-base),
-              border-color var(--transition-base);
+              border-color var(--transition-base),
+              transform var(--transition-base);
+}
+
+.collection-load-button svg {
+  display: block;
+  width: 24px;
+  height: 22px;
+  flex: 0 0 auto;
 }
 
 .collection-load-button:hover {
   border-color: var(--color-ink);
   background: var(--color-accent);
+  transform: translateY(-2px);
 }
 
 .collection-load-button[hidden] {

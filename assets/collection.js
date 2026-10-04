@@ -5,8 +5,9 @@
   const template = grid.querySelector('.product[data-product-key]')?.cloneNode(true)
     || pageTemplate?.content.firstElementChild?.cloneNode(true);
   const pageSize = Number(grid.dataset.pageSize) || 8;
-  const pagination = document.querySelector('[data-collection-pagination]');
   const countLabel = document.querySelector('[data-collection-count]');
+  const progress = document.querySelector('[data-collection-progress]');
+  const loadMoreButton = document.querySelector('[data-collection-load-more]');
   const status = document.querySelector('[data-collection-status]');
   if (!template) {
     console.error('Unable to load collection products: no product card template was found.');
@@ -83,79 +84,32 @@
     return card;
   }
 
-  function setupPagination() {
+  function setupProductVisibility() {
     const cards = [...grid.querySelectorAll('.product')];
-    let currentPage = 1;
-    const pageCount = Math.max(1, Math.ceil(cards.length / pageSize));
+    let visibleCount = Math.min(pageSize, cards.length);
 
-    function renderPage() {
-      const start = (currentPage - 1) * pageSize;
+    function render() {
       cards.forEach((card, index) => {
-        card.hidden = index < start || index >= start + pageSize;
+        card.hidden = index >= visibleCount;
       });
 
       if (countLabel) {
-        const first = cards.length ? start + 1 : 0;
-        const last = Math.min(start + pageSize, cards.length);
-        countLabel.textContent = `Showing ${first}–${last} of ${cards.length} pieces`;
+        countLabel.textContent = loadMoreButton
+          ? `You have viewed ${visibleCount} of ${cards.length} products`
+          : `Showing ${visibleCount ? 1 : 0}–${visibleCount} of ${cards.length} pieces`;
       }
-
-      if (!pagination) return;
-      pagination.replaceChildren();
-      pagination.hidden = pageCount <= 1;
-      if (pagination.hidden) return;
-
-      const addPageButton = (label, page, ariaLabel, current = false) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'page-button';
-        button.textContent = label;
-        button.setAttribute('aria-label', ariaLabel);
-        if (current) button.setAttribute('aria-current', 'page');
-        button.addEventListener('click', () => {
-          currentPage = page;
-          renderPage();
-          grid.scrollIntoView({behavior: 'smooth', block: 'start'});
-        });
-        pagination.append(button);
-      };
-
-      const previous = document.createElement('button');
-      previous.type = 'button';
-      previous.className = 'page-button';
-      previous.textContent = 'Previous';
-      previous.disabled = currentPage === 1;
-      previous.setAttribute('aria-label', 'Go to previous page');
-      previous.addEventListener('click', () => {
-        if (currentPage > 1) {
-          currentPage -= 1;
-          renderPage();
-          grid.scrollIntoView({behavior: 'smooth', block: 'start'});
-        }
-      });
-      pagination.append(previous);
-
-      for (let page = 1; page <= pageCount; page += 1) {
-        addPageButton(String(page), page, `Go to page ${page}`, page === currentPage);
+      if (progress) {
+        progress.max = Math.max(cards.length, 1);
+        progress.value = visibleCount;
       }
-
-      const next = document.createElement('button');
-      next.type = 'button';
-      next.className = 'page-button';
-      next.textContent = 'Next';
-      next.disabled = currentPage === pageCount;
-      next.setAttribute('aria-label', 'Go to next page');
-      next.addEventListener('click', () => {
-        if (currentPage < pageCount) {
-          currentPage += 1;
-          renderPage();
-          grid.scrollIntoView({behavior: 'smooth', block: 'start'});
-        }
-      });
-      pagination.append(next);
+      if (loadMoreButton) loadMoreButton.hidden = visibleCount >= cards.length;
     }
 
-    renderPage();
+    loadMoreButton?.addEventListener('click', () => {
+      visibleCount = Math.min(visibleCount + pageSize, cards.length);
+      render();
+    });
+    render();
   }
 
   async function loadCollection() {
@@ -188,14 +142,14 @@
         }
       });
       if (status) status.hidden = true;
-      setupPagination();
+      setupProductVisibility();
     } catch (error) {
       console.error('Unable to load collection products.', error);
       if (status) {
         status.textContent = 'The collection could not be loaded. Please try again later.';
         status.hidden = false;
       }
-      setupPagination();
+      setupProductVisibility();
     }
   }
 
@@ -207,6 +161,6 @@
       status.textContent = 'The collection could not be loaded. Please try again later.';
       status.hidden = false;
     }
-    setupPagination();
+    setupProductVisibility();
   }
 })();

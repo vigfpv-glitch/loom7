@@ -43,8 +43,11 @@
       </div>
       <div class="grid" data-page-size="16" aria-live="polite"></div>
       <p class="collection-status" data-collection-status role="status" hidden></p>
-      <p class="collection-count" data-collection-count aria-live="polite"></p>
-      <nav class="collection-pagination" data-collection-pagination aria-label="Collection pages" hidden></nav>
+      <div class="collection-load-more">
+        <p class="collection-count" data-collection-count aria-live="polite"></p>
+        <progress class="collection-progress" data-collection-progress max="1" value="0" aria-label="Products viewed"></progress>
+        <button class="collection-load-button" data-collection-load-more type="button" hidden>Load more</button>
+      </div>
     </section>
   </main>
   <footer class="footer">

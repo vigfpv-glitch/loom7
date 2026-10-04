@@ -38,134 +38,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{--ink:#211f1b;--muted:#726d66;--paper:#f8f6f1;--sand:#eae4da;--warm:#c9b8a4;--accent:#b18a65;--white:#fff;--line:#e9e4db;--dark:#24211e}
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;background:var(--paper);color:var(--ink);font-family:'DM Sans',Arial,sans-serif;font-size:16px;line-height:1.5}
-    body,button,a{font-synthesis:none}
-    a{color:inherit;text-decoration:none}
-    button{font:inherit}
-    img{max-width:100%}
-    .skip-link{position:absolute;left:16px;top:-60px;z-index:10;background:var(--ink);color:#fff;padding:12px 16px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:top .2s}
-    .skip-link:focus{top:16px}
-    :where(a,button):focus-visible{outline:3px solid var(--accent);outline-offset:4px}
-    .topbar{background:var(--dark);color:#fff;text-align:center;padding:9px 16px;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
-    .nav{min-height:88px;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:8px 6vw;background:var(--paper);border-bottom:1px solid var(--line)}
-    .logo{display:flex;align-items:center;flex:0 0 auto;min-height:72px}
-    .logo img{display:block;width:112px;height:72px;object-fit:contain;object-position:center;filter:none}
-    .navlinks{display:flex;gap:31px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
-    .navlinks a{padding:8px 0}
-    .navlinks a:hover,.social a:hover,.footer-links a:hover{color:var(--accent)}
-    .button,.nav-cta{display:inline-flex;align-items:center;justify-content:center;min-height:44px;background:var(--ink);color:#fff;padding:13px 22px;border:1px solid var(--ink);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;transition:background .2s,border-color .2s,transform .2s}
-    .button:hover,.nav-cta:hover{background:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
-    .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:650px;background:var(--sand)}
-    .hero-copy{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:clamp(48px,8vw,120px)}
-    .eyebrow{font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
-    h1,h2,h3,p{margin-top:0}
-    .hero h1{font-family:'Playfair Display',Georgia,serif;font-size:clamp(52px,6vw,82px);line-height:1.02;font-weight:500;letter-spacing:-.025em;margin:17px 0 22px;max-width:560px}
-    .hero-copy p{max-width:410px;color:#625d56;font-size:15px;line-height:1.8;margin-bottom:29px}
-    .hero-note{display:flex;align-items:center;gap:10px;margin-top:20px;color:var(--muted);font-size:12px}
-    .hero-note::before{content:'';width:24px;height:1px;background:var(--accent)}
-    .media{position:relative;overflow:hidden;background:linear-gradient(145deg,#d7c8b6 0%,#a88e75 100%)}
-    .media::after{content:attr(data-fallback);position:absolute;left:24px;bottom:24px;max-width:calc(100% - 48px);background:rgba(248,246,241,.92);padding:11px 14px;font-size:9px;letter-spacing:.18em;text-transform:uppercase}
-    .media img{display:block;width:100%;height:100%;object-fit:cover}
-    .media img[hidden]{display:none}
-    .hero-image{min-height:650px}
-    .hero-image img,.hero-image video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-    .hero-image::before{content:'LOOM7';position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.46);font:500 clamp(48px,8vw,104px) 'Playfair Display',Georgia,serif;letter-spacing:.1em;opacity:0;z-index:1}
-    .hero-image.is-fallback::before{opacity:1}
-    .section{padding:clamp(64px,8vw,104px) 7vw}
-    .section-heading{text-align:center;margin:0 auto 44px;max-width:620px}
-    .section-heading .eyebrow{margin-bottom:11px}
-    .section-heading h2{font:500 clamp(34px,4vw,48px)/1.1 'Playfair Display',Georgia,serif;letter-spacing:-.02em;margin-bottom:14px}
-    .section-heading p{font-size:14px;color:var(--muted);margin-bottom:0}
-    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;max-width:1440px;margin:0 auto}
-    .product{position:relative;background:var(--white);border:1px solid rgba(33,31,27,.05);transition:transform .25s,box-shadow .25s}
-    .product:hover,.product:focus-within{transform:translateY(-4px);box-shadow:0 8px 24px rgba(33,31,27,.08)}
-    .product-card{display:block;height:100%;color:inherit}
-    .product-image{display:block;height:355px}
-    .product-image img{transition:transform .5s}
-    .product:hover .product-image img,.product-card:focus-visible .product-image img{transform:scale(1.04)}
-    .product-copy{padding:20px 18px 21px}
-    .product-copy h3{font:500 21px/1.2 'Playfair Display',Georgia,serif;margin-bottom:8px}
-    .product-copy p{font-size:13px;color:var(--muted);margin-bottom:16px}
-    .product-link{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;border-bottom:1px solid var(--accent);padding-bottom:4px}
-    .quick-view{position:absolute;top:12px;right:12px;z-index:2;border:0;background:rgba(248,246,241,.94);color:var(--ink);padding:10px 12px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s,color .2s}
-    .quick-view:hover{background:var(--ink);color:#fff}
-    .quick-view-dialog,.size-dialog{width:min(760px,calc(100% - 32px));padding:0;border:0;background:var(--paper);color:var(--ink);box-shadow:0 20px 60px rgba(33,31,27,.22)}
-    .quick-view-dialog::backdrop,.size-dialog::backdrop{background:rgba(33,31,27,.56)}
-    .dialog-inner{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:420px}
-    .dialog-media{min-height:420px;background:linear-gradient(145deg,#d7c8b6 0%,#a88e75 100%)}
-    .dialog-media img{width:100%;height:100%;object-fit:cover}
-    .dialog-copy{position:relative;padding:42px 38px 38px}
-    .dialog-copy h2{font:500 clamp(32px,4vw,46px)/1.1 'Playfair Display',Georgia,serif;margin:13px 0 16px}
-    .dialog-copy p{color:var(--muted);font-size:14px;line-height:1.75}
-    .dialog-note{margin:22px 0 26px;padding-top:18px;border-top:1px solid var(--line);font-size:13px!important}
-    .dialog-close{position:absolute;top:14px;right:16px;border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:8px}
-    .dialog-close:hover{color:var(--ink)}
-    .guide-trigger{display:inline-flex;align-items:center;justify-content:center;margin-top:28px;border:1px solid var(--ink);background:transparent;color:var(--ink);padding:13px 18px;font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;cursor:pointer;transition:background .2s,color .2s}
-    .guide-trigger:hover{background:var(--ink);color:#fff}
-    .size-dialog{max-width:620px}
-    .size-dialog .dialog-copy{padding:42px}
-    .size-list{display:grid;gap:12px;margin:22px 0 0;padding:0;list-style:none}
-    .size-list li{padding:14px 16px;background:#fff;border-left:2px solid var(--accent);font-size:13px;color:var(--muted)}
-    .mobile-sticky-cta{display:none}
-    .toast{position:fixed;left:50%;bottom:24px;z-index:20;transform:translate(-50%,16px);background:var(--ink);color:#fff;padding:12px 16px;font-size:11px;letter-spacing:.04em;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
-    .toast.is-visible{opacity:1;transform:translate(-50%,0)}
-    .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);max-width:1040px;margin:0 auto}
-    .step{background:var(--paper);padding:28px 30px}
-    .step-number{display:block;margin-bottom:26px;color:var(--accent);font:500 34px/1 'Playfair Display',Georgia,serif}
-    .step h3{font:600 17px/1.3 'DM Sans',Arial,sans-serif;margin-bottom:9px}
-    .step p{color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:0}
-    .feature{background:#e8dfd3;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(36px,6vw,96px)}
-    .feature-image{height:470px}
-    .feature-copy{max-width:520px}
-    .newspaper-cutout{position:relative;isolation:isolate;background:#d6d6d0 url('assets/newsprint-texture.webp') center/cover;padding:38px 42px 42px;color:#1d1d1b;clip-path:polygon(1% 5%,6% 4%,11% 5%,18% 3%,26% 5%,34% 3%,43% 5%,51% 4%,60% 5%,69% 3%,78% 5%,87% 4%,96% 6%,98% 14%,97% 24%,99% 34%,97% 45%,99% 56%,97% 68%,98% 80%,96% 92%,89% 94%,80% 93%,72% 95%,64% 93%,55% 95%,46% 93%,37% 95%,28% 93%,20% 95%,12% 93%,4% 95%,2% 86%,3% 76%,1% 66%,3% 55%,1% 44%,3% 33%,1% 22%);box-shadow:10px 12px 0 rgba(33,31,27,.16),0 18px 34px rgba(33,31,27,.1);transform:rotate(-1.2deg)}
-    .newspaper-cutout::before{content:'';position:absolute;inset:0;z-index:-1;background:repeating-linear-gradient(0deg,transparent 0 22px,rgba(45,45,42,.06) 23px,transparent 24px);mix-blend-mode:multiply;opacity:.65}
-    .newspaper-cutout::after{content:'';position:absolute;left:38px;right:38px;bottom:25px;height:1px;background:rgba(33,31,27,.38)}
-    .newspaper-meta{display:flex;justify-content:space-between;gap:16px;margin-bottom:24px;padding:10px 0;border-top:1px solid rgba(33,31,27,.48);border-bottom:1px solid rgba(33,31,27,.48);color:#3d3d39;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
-    .feature-copy h2{font:700 clamp(36px,4vw,54px)/.98 'Playfair Display',Georgia,serif;letter-spacing:-.035em;margin:0 0 22px;max-width:460px;text-transform:uppercase}
-    .newspaper-copy{border-left:2px solid #4b4b47;padding-left:18px}
-    .feature-copy p{font-size:14px;color:#42423e;line-height:1.8;margin-bottom:28px}
-    .newspaper-cutout .button{margin-top:2px;background:#1d1d1b;border-color:#1d1d1b}
-    .newspaper-cutout .button:hover{background:#4b4b47;border-color:#4b4b47}
-    .social{background:var(--dark);color:#fff;text-align:center;padding:80px 20px}
-    .social h2{font:500 clamp(34px,4vw,44px)/1.15 'Playfair Display',Georgia,serif;margin:12px 0 15px}
-    .social p{font-size:14px;color:#d5d0ca;margin-bottom:26px}
-    .social .button{background:#fff;color:var(--dark);border-color:#fff}
-    .social .button:hover{background:var(--accent);border-color:var(--accent);color:#fff}
-    .footer{display:flex;align-items:center;justify-content:space-between;gap:28px;padding:48px 7vw;background:#1a1816;color:#cfc9c1;font-size:13px;line-height:1.6}
-    .footer-brand{display:block;filter:brightness(0) invert(1)}
-    .footer-brand img{display:block;height:34px;width:auto}
-    .footer-links{display:flex;gap:24px}
-    .footer-links a{padding:8px 0;letter-spacing:.04em}
-    .footer-top{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:48px;height:48px;border:1px solid rgba(255,255,255,.28);border-radius:50%;color:#cfc9c1;transition:background .2s,border-color .2s,color .2s,transform .2s}
-    .footer-top:hover{background:var(--accent);border-color:var(--accent);color:#fff;transform:translateY(-3px)}
-    .footer-top svg{display:block;width:18px;height:18px}
-    .newsletter{background:var(--paper);padding:clamp(64px,8vw,104px) 7vw;text-align:center}
-    .newsletter h2{font:500 clamp(34px,4vw,48px)/1.1 'Playfair Display',Georgia,serif;letter-spacing:-.02em;margin:0 0 14px}
-    .newsletter p{font-size:14px;color:var(--muted);margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto}
-    .newsletter-form{display:flex;flex-direction:column;gap:16px;max-width:480px;margin:0 auto}
-    .newsletter-field{display:flex;flex-direction:column;gap:6px;text-align:left}
-    .newsletter-field label{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
-    .newsletter-field input{padding:14px 16px;font-size:15px;font-family:'DM Sans',Arial,sans-serif;border:1px solid var(--line);background:#fff;color:var(--ink);transition:border-color .2s}
-    .newsletter-field input:focus{outline:3px solid var(--accent);outline-offset:2px;border-color:var(--accent)}
-    .newsletter-field input::placeholder{color:var(--muted)}
-    .newsletter-consent{display:flex;align-items:flex-start;gap:10px;text-align:left;font-size:13px;color:var(--muted);line-height:1.5}
-    .newsletter-consent input[type=checkbox]{flex:0 0 auto;width:18px;height:18px;margin-top:2px;cursor:pointer;accent-color:var(--accent)}
-    .newsletter-consent label{cursor:pointer;color:var(--muted)}
-    .newsletter-notice{margin-top:16px;padding:12px 16px;font-size:13px;border-radius:4px}
-    .newsletter-notice.hidden{display:none}
-    .newsletter-notice.success{background:#e8f5e9;color:#2e7d32}
-    .newsletter-notice.error{background:#ffebee;color:#c62828}
-    .newsletter-submit{min-height:48px;background:var(--ink);color:#fff;padding:13px 22px;border:1px solid var(--ink);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .2s,border-color .2s,transform .2s;font:inherit}
-    .newsletter-submit:hover:not(:disabled){background:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
-    .newsletter-submit:disabled{opacity:.6;cursor:not-allowed}
-    @media(max-width:1020px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.product-image{height:330px}.hero{min-height:560px}.hero-image{min-height:560px}}
-    @media(max-width:760px){.nav{min-height:84px;padding:6px 5vw;flex-wrap:wrap}.logo{min-height:64px}.logo img{width:94px;height:64px}.navlinks{order:3;width:100%;justify-content:center;gap:17px;font-size:10px;padding:2px 0 0}.nav-cta{padding:10px 13px;font-size:9px}.hero{grid-template-columns:1fr;min-height:0}.hero-copy{padding:64px 8vw 52px}.hero h1{font-size:clamp(48px,14vw,70px)}.hero-image{min-height:420px}.section{padding:64px 6vw}.grid{grid-template-columns:1fr;gap:18px;max-width:440px}.product-image{height:430px}.steps{grid-template-columns:1fr;max-width:440px}.step{padding:24px}.step-number{margin-bottom:16px}.dialog-inner{grid-template-columns:1fr}.dialog-media{min-height:280px;max-height:340px}.dialog-copy{padding:34px 26px 28px}.size-dialog .dialog-copy{padding:34px 26px 28px}.guide-trigger{width:100%}.mobile-sticky-cta{display:flex;position:fixed;left:16px;right:16px;bottom:14px;z-index:15;align-items:center;justify-content:center;min-height:48px;background:var(--ink);color:#fff;border:1px solid var(--ink);font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;box-shadow:0 8px 24px rgba(33,31,27,.2)}.toast{bottom:76px}.feature{grid-template-columns:1fr;padding:0;gap:0}.feature-image{height:360px}.feature-copy{padding:48px 8vw 62px}.newspaper-cutout{padding:32px 26px 36px;transform:rotate(-.4deg);box-shadow:6px 8px 0 rgba(177,138,101,.2),0 14px 28px rgba(33,31,27,.08)}.newspaper-meta{font-size:8px}.footer{flex-direction:column;gap:18px;text-align:center;padding:40px 6vw 88px}.footer-links{flex-wrap:wrap;justify-content:center;gap:14px 20px}.newsletter{padding:64px 6vw}.newsletter-form{max-width:100%}}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.product,.button,.nav-cta,.product-image img{transition:none}.product:hover,.button:hover,.nav-cta:hover{transform:none}}
-  </style>
+  <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
@@ -177,46 +50,76 @@
   </header>
   <main id="main-content">
     <section class="hero" id="home" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <div class="eyebrow">Considered style · Everyday wear</div>
-        <h1 id="hero-title">Timeless styles for modern you</h1>
-        <p id="hero-subtitle">Clothing made for the way you move through every day. Explore The Roots collection and message us on Instagram to order.</p>
-        <a id="hero-cta" class="button" href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Order via Instagram DM</a>
-        <div class="hero-note">Personal help with sizes, fit and availability</div>
-      </div>
-      <div class="media hero-image" data-fallback="The Roots collection">
+      <div class="hero-image" data-fallback="The Roots collection">
         <img id="hero-image" src="assets/hero-static.webp" alt="Model wearing a contemporary Loom7 outfit" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')">
+      </div>
+      <div class="hero-content">
+        <div class="hero-label">ROOTS — COLLECTION 01</div>
+        <h1 id="hero-title">WEAR YOUR OWN RHYTHM.</h1>
+        <div class="hero-cta-group">
+          <a id="hero-cta-primary" class="button button-primary" href="#collection">SHOP THE COLLECTION</a>
+          <a id="hero-cta-secondary" class="button button-secondary" href="#collection">EXPLORE ROOTS</a>
+        </div>
       </div>
     </section>
 
-<section class="section" id="collection" aria-labelledby="collection-title">
-      <div class="section-heading"><div class="eyebrow">The Loom7 edit</div><h2 id="collection-title">The Roots</h2><p>Tap any piece to message us directly on Instagram about availability, sizes and prices.</p></div>
+<section class="section collection-section" id="collection" aria-labelledby="collection-title">
+      <div class="collection-header">
+        <div class="collection-label">ROOTS — COLLECTION 01</div>
+        <h2 id="collection-title">The Roots</h2>
+        <p class="collection-intro">Pieces designed for the way you move through every day. Tap any item to message us directly on Instagram about availability, sizes, and pricing.</p>
+      </div>
       <div class="grid">
         <article class="product" data-product-key="roots-01"><a class="product-card" data-instagram-product="Roots 01" data-message="Hi Loom7, I'm interested in Roots 01." href="https://ig.me/m/loom7.co" target="_blank" rel="noopener" aria-label="Message Loom7 about Roots 01 on Instagram"><span class="media product-image" data-fallback="Roots 01"><img loading="lazy" decoding="async" src="assets/roots-01.webp" alt="Roots 01 — Loom7 collection look" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')"></span><div class="product-copy"><h3>Roots 01</h3><p>A statement piece from The Roots.</p><span class="product-link">Message us on Instagram</span></div></a><button class="quick-view" type="button" data-quick-view="Roots 01" data-image="assets/roots-01.webp" data-alt="Roots 01 — Loom7 collection look">Quick view</button></article>
         <article class="product" data-product-key="roots-02"><a class="product-card" data-instagram-product="Roots 02" data-message="Hi Loom7, I'm interested in Roots 02." href="https://ig.me/m/loom7.co" target="_blank" rel="noopener" aria-label="Message Loom7 about Roots 02 on Instagram"><span class="media product-image" data-fallback="Roots 02"><img loading="lazy" decoding="async" src="assets/roots-02.webp" alt="Roots 02 — Loom7 collection look" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')"></span><div class="product-copy"><h3>Roots 02</h3><p>A statement piece from The Roots.</p><span class="product-link">Message us on Instagram</span></div></a><button class="quick-view" type="button" data-quick-view="Roots 02" data-image="assets/roots-02.webp" data-alt="Roots 02 — Loom7 collection look">Quick view</button></article>
         <article class="product" data-product-key="roots-03"><a class="product-card" data-instagram-product="Roots 03" data-message="Hi Loom7, I'm interested in Roots 03." href="https://ig.me/m/loom7.co" target="_blank" rel="noopener" aria-label="Message Loom7 about Roots 03 on Instagram"><span class="media product-image" data-fallback="Roots 03"><img loading="lazy" decoding="async" src="assets/roots-03.webp" alt="Roots 03 — Loom7 collection look" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')"></span><div class="product-copy"><h3>Roots 03</h3><p>A statement piece from The Roots.</p><span class="product-link">Message us on Instagram</span></div></a><button class="quick-view" type="button" data-quick-view="Roots 03" data-image="assets/roots-03.webp" data-alt="Roots 03 — Loom7 collection look">Quick view</button></article>
         <article class="product" data-product-key="roots-04"><a class="product-card" data-instagram-product="Roots 04" data-message="Hi Loom7, I'm interested in Roots 04." href="https://ig.me/m/loom7.co" target="_blank" rel="noopener" aria-label="Message Loom7 about Roots 04 on Instagram"><span class="media product-image" data-fallback="Roots 04"><img loading="lazy" decoding="async" src="assets/roots-04.webp" alt="Roots 04 — Loom7 collection look" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')"></span><div class="product-copy"><h3>Roots 04</h3><p>A statement piece from The Roots.</p><span class="product-link">Message us on Instagram</span></div></a><button class="quick-view" type="button" data-quick-view="Roots 04" data-image="assets/roots-04.webp" data-alt="Roots 04 — Loom7 collection look">Quick view</button></article>
       </div>
-      <button class="guide-trigger" type="button" id="open-size-guide">Open size &amp; fit guide</button>
-    </section>
-
-<section class="section" id="how-to-order" aria-labelledby="order-title">
-      <div class="section-heading"><div class="eyebrow">Simple by design</div><h2 id="order-title">How to order</h2><p>Discover your piece, then let us help with the details.</p></div>
-      <div class="steps">
-        <div class="step"><span class="step-number">01</span><h3>Choose your piece</h3><p>Browse The Roots edit and find the look that feels like you.</p></div>
-        <div class="step"><span class="step-number">02</span><h3>Send us a DM</h3><p>Message @loom7.co with the piece you like and your questions.</p></div>
-        <div class="step"><span class="step-number">03</span><h3>Confirm your order</h3><p>We will help with availability, sizing, price and next steps.</p></div>
+      <div class="collection-footer">
+        <button class="guide-trigger" type="button" id="open-size-guide">Size &amp; fit guide</button>
+        <a class="collection-cta button button-secondary" href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">View full collection on Instagram</a>
       </div>
     </section>
 
-<section class="section feature" id="story" aria-labelledby="story-title">
-      <div class="media feature-image" data-fallback="The Loom7 way"><img loading="lazy" decoding="async" src="assets/story-feature.webp" alt="Loom7 fashion collection photo" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')"></div>
-      <div class="feature-copy">
-        <div class="newspaper-cutout">
-          <div class="newspaper-meta"><span>The Loom7 way</span><span>The Roots edit</span></div>
-          <h2 id="story-title">Your style, your story.</h2>
-          <div class="newspaper-copy"><p>Loom7 is an online clothing destination for finding pieces that feel like you. Discover the collection here, then reach us on Instagram for personal help with your order.</p><a class="button" href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Find us on Instagram</a></div>
+<section class="section" id="how-to-order" aria-labelledby="order-title">
+      <div class="order-header">
+        <div class="order-label">How to order</div>
+        <h2 id="order-title">The ordering process</h2>
+        <p class="order-intro">Four simple steps to bring your LOOM7 piece to you.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span class="step-number">01</span>
+          <h3>Find your piece</h3>
+          <p>Browse the ROOTS collection and choose the piece you want.</p>
         </div>
+        <div class="step">
+          <span class="step-number">02</span>
+          <h3>Message us</h3>
+          <p>Use the Instagram ordering button to contact LOOM7 with the product details.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">03</span>
+          <h3>We confirm</h3>
+          <p>LOOM7 confirms availability, size, price and delivery details.</p>
+        </div>
+        <div class="step">
+          <span class="step-number">04</span>
+          <h3>We deliver</h3>
+          <p>Your LOOM7 piece is prepared and shipped to you.</p>
+        </div>
+      </div>
+    </section>
+
+<section class="section story-section" id="story" aria-labelledby="story-title">
+      <div class="story-content">
+        <div class="story-label">About</div>
+        <h1 id="story-title">WEAR YOUR OWN RHYTHM.</h1>
+        <p class="story-text">LOOM7 is about clothing that feels like you — not clothing that tells you who to be. Pieces designed for the way you move through every day.</p>
+        <a class="button button-secondary" href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Follow on Instagram</a>
+      </div>
+      <div class="story-image">
+        <img loading="lazy" decoding="async" src="assets/story-feature.webp" alt="Loom7 fashion collection photo" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')">
       </div>
     </section>
 

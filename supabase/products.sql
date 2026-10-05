@@ -6,6 +6,7 @@ begin;
 -- Editing a built-in card saves a product with its key, which then replaces the card.
 alter table public.products add column if not exists website_key text;
 alter table public.products add column if not exists price numeric(10,2);
+alter table public.products add column if not exists sort_order integer not null default 0;
 alter table public.products drop constraint if exists products_price_nonnegative;
 alter table public.products add constraint products_price_nonnegative
   check (price is null or price >= 0);
@@ -13,6 +14,24 @@ alter table public.products drop constraint if exists products_website_key_forma
 alter table public.products add constraint products_website_key_format
   check (website_key is null or website_key ~ '^[a-z0-9-]{1,64}$');
 create unique index if not exists products_website_key_unique on public.products (website_key);
+alter table public.products drop constraint if exists products_sort_order_nonnegative;
+alter table public.products add constraint products_sort_order_nonnegative check (sort_order >= 0);
+
+with ranked_products as (
+  select id, row_number() over (
+    order by case when sort_order > 0 then sort_order else 2147483647 end, created_at, id
+  )::integer as position
+  from public.products
+  where website_key is null
+)
+update public.products as product
+set sort_order = ranked_products.position
+from ranked_products
+where product.id = ranked_products.id;
+
+update public.products set sort_order = 0 where website_key is not null and sort_order <> 0;
+create index if not exists products_collection_order on public.products (sort_order, created_at)
+  where website_key is null;
 
 create or replace function public.touch_products_updated_at()
 returns trigger language plpgsql set search_path = '' as $$
@@ -33,6 +52,54 @@ returns setof text language sql stable security definer set search_path = '' as 
 $$;
 revoke all on function public.hidden_website_product_keys() from public;
 grant execute on function public.hidden_website_product_keys() to anon, authenticated;
+
+create or replace function public.reorder_product(p_product_id uuid, p_new_position integer)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  current_position integer;
+  product_count integer;
+begin
+  if not (select public.is_loom7_admin()) then
+    raise exception 'Only Loom7 admins can reorder products.';
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('public.products.collection_order'));
+
+  select sort_order into current_position
+  from public.products
+  where id = p_product_id and website_key is null
+  for update;
+  if not found then
+    raise exception 'The uploaded product no longer exists.';
+  end if;
+
+  select count(*)::integer into product_count
+  from public.products
+  where website_key is null;
+  if p_new_position < 1 or p_new_position > product_count then
+    raise exception 'Choose a position between 1 and %.', product_count;
+  end if;
+  if current_position = p_new_position then
+    return;
+  end if;
+
+  update public.products
+  set sort_order = case
+    when id = p_product_id then p_new_position
+    when current_position < p_new_position
+      and sort_order > current_position and sort_order <= p_new_position then sort_order - 1
+    when current_position > p_new_position
+      and sort_order >= p_new_position and sort_order < current_position then sort_order + 1
+    else sort_order
+  end
+  where website_key is null
+    and (id = p_product_id
+      or (current_position < p_new_position and sort_order > current_position and sort_order <= p_new_position)
+      or (current_position > p_new_position and sort_order >= p_new_position and sort_order < current_position));
+end;
+$$;
+revoke all on function public.reorder_product(uuid, integer) from public;
+grant execute on function public.reorder_product(uuid, integer) to authenticated;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('product_images', 'product_images', true, 3145728, array['image/jpeg', 'image/png', 'image/webp'])

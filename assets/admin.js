@@ -487,10 +487,19 @@ async function loadWebsiteProducts() {
 }
 
 function mergeProducts(savedProducts, websiteProducts) {
-  return savedProducts.concat(websiteProducts.filter(websiteProduct => !savedProducts.some(product =>
-    product.website_key === websiteProduct.website_key
-    || (product.name.trim().toLowerCase() === websiteProduct.name.toLowerCase()
-      && safeImage(product.image_url) === safeImage(websiteProduct.image_url)))));
+  const roots = websiteProducts
+    .filter(websiteProduct => !savedProducts.some(product => !product.website_key
+      && product.name.trim().toLowerCase() === websiteProduct.name.toLowerCase()
+      && safeImage(product.image_url) === safeImage(websiteProduct.image_url)))
+    .map(websiteProduct => {
+      const saved = savedProducts.find(product => product.website_key === websiteProduct.website_key);
+      return saved ? {...saved, is_website_product: true} : websiteProduct;
+    });
+  const uploaded = savedProducts.filter(product => !product.website_key).sort((a, b) =>
+    Number(a.sort_order || 0) - Number(b.sort_order || 0)
+    || String(a.created_at || '').localeCompare(String(b.created_at || ''))
+    || String(a.id).localeCompare(String(b.id)));
+  return roots.concat(uploaded);
 }
 
 async function loadProducts() {
@@ -549,16 +558,24 @@ function renderProducts() {
     box.innerHTML = '<div class="empty"><strong>' + (products.length ? 'No matching pieces.' : 'Your collection starts here.') + '</strong><p>' + (products.length ? 'Try another search or change the visibility filter.' : 'Add your first product using the collection details form.') + '</p></div>';
     return;
   }
-  box.innerHTML = '<table><caption class="sr-only">Products in your collection</caption><thead><tr><th scope="col">Image</th><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>' + filtered.map(product => {
+  const uploadedProducts = products.filter(item => !item.website_key)
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0)
+      || String(a.created_at || '').localeCompare(String(b.created_at || ''))
+      || String(a.id).localeCompare(String(b.id)));
+  box.innerHTML = '<table><caption class="sr-only">Products in your collection</caption><thead><tr><th scope="col">Image</th><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Position</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>' + filtered.map(product => {
     const image = safeImage(product.image_url);
     const name = escapeHtml(product.name);
     const id = escapeHtml(product.id);
     const price = product.price === null || product.price === undefined || product.price === ''
       ? null : Number(product.price);
     const priceText = Number.isFinite(price) && price >= 0 ? escapeHtml(priceFormatter.format(price)) : '—';
+    const uploadedPosition = product.website_key ? 0 : uploadedProducts.findIndex(item => item.id === product.id) + 1;
     const actions = '<button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button>'
-      + (product.is_website_product ? '' : '<button type="button" class="btn danger" data-delete="' + id + '" aria-label="Delete ' + name + '">Delete</button>');
-    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td>' + priceText + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
+      + (product.website_key ? '' :
+        '<button type="button" class="btn" data-move="' + id + '" data-position="' + (uploadedPosition - 1) + '" aria-label="Move ' + name + ' up"' + (uploadedPosition <= 1 ? ' disabled' : '') + '>↑</button>'
+        + '<button type="button" class="btn" data-move="' + id + '" data-position="' + (uploadedPosition + 1) + '" aria-label="Move ' + name + ' down"' + (uploadedPosition >= uploadedProducts.length ? ' disabled' : '') + '>↓</button>')
+      + '<button type="button" class="btn danger" data-delete="' + id + '" aria-label="Delete ' + name + '">Delete</button>';
+    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td>' + priceText + '</td><td>' + (uploadedPosition ? uploadedPosition : '—') + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
   }).join('') + '</tbody></table>';
   box.querySelectorAll('img').forEach(image => image.addEventListener('error', () => {
     const placeholder = document.createElement('span');
@@ -571,9 +588,41 @@ function renderProducts() {
   box.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', () => {
     pendingDelete = products.find(product => String(product.id) === button.dataset.delete);
     $('deleteName').textContent = pendingDelete.name;
+    $('deleteDescription').textContent = pendingDelete.website_key
+      ? 'This built-in website product will be hidden from visitors. You can restore it later by editing it and setting it to Visible.'
+      : 'This product will be permanently deleted from the collection. This cannot be undone.';
+    $('deleteDialog').querySelector('[value="delete"]').textContent = pendingDelete.website_key
+      ? 'Remove from website' : 'Delete product';
     $('deleteDialog').returnValue = '';
     $('deleteDialog').showModal();
   }));
+  box.querySelectorAll('[data-move]').forEach(button => button.addEventListener('click', () => {
+    const product = products.find(item => String(item.id) === button.dataset.move);
+    if (product) reorderProduct(product, Number(button.dataset.position));
+  }));
+}
+
+let reorderingProduct = false;
+async function reorderProduct(product, position) {
+  if (!db || reorderingProduct) return;
+  reorderingProduct = true;
+  $('productsList').querySelectorAll('[data-move]').forEach(button => { button.disabled = true; });
+  try {
+    const {error} = await db.rpc('reorder_product', {
+      p_product_id: product.id,
+      p_new_position: position,
+    });
+    if (error) throw error;
+    await loadProducts();
+    showMessage(notice, '“' + product.name + '” moved to position ' + position + '.', 'success');
+  } catch (error) {
+    const detail = error && typeof error.message === 'string' ? error.message : String(error);
+    showMessage(notice, 'Could not change the product position: ' + detail
+      + '. Run the updated supabase/products.sql script, then try again.', 'error');
+  } finally {
+    reorderingProduct = false;
+    if ($('productsList').querySelector('table')) renderProducts();
+  }
 }
 
 async function loadSubscribers() {
@@ -820,9 +869,10 @@ $('productForm').addEventListener('submit', async event => {
   $('productName').setCustomValidity('');
   if (!$('productForm').reportValidity()) return;
   const file = $('productImage').files[0];
+  const uploadedPosition = products.filter(product => !product.website_key).length + 1;
   const values = {name, description: $('productDescription').value.trim() || null,
     price: $('productPrice').value === '' ? null : Number($('productPrice').value),
-    image_url: currentImageUrl || null, is_visible: $('productVisible').checked};
+    image_url: currentImageUrl || null, is_visible: $('productVisible').checked, sort_order: uploadedPosition};
   let uploaded = null;
   setBusy($('saveButton'), true, 'Saving…');
   $('addProduct').disabled = true;
@@ -854,14 +904,44 @@ $('deleteDialog').addEventListener('close', async () => {
   const product = pendingDelete;
   pendingDelete = null;
   if ($('deleteDialog').returnValue !== 'delete' || !product) return;
+  let imageUrlToRemove = '';
   try {
-    const {error} = await db.from('products').delete().eq('id', product.id);
-    if (error) throw error;
-    await removeProductImage(product.image_url);
-    showMessage(notice, '“' + product.name + '” deleted from the collection.', 'success');
+    if (product.website_key) {
+      const {data, error} = await db.from('products').upsert({
+        website_key: product.website_key,
+        name: product.name,
+        description: product.description || null,
+        image_url: product.image_url || null,
+        is_visible: false,
+      }, {onConflict: 'website_key'}).select('id');
+      if (error) throw error;
+      if (!data?.length) throw new Error('The product could not be hidden. Check that you are signed in as an authorized admin.');
+    } else {
+      const {data, error} = await db.from('products').delete().eq('id', product.id).select('id');
+      if (error) throw error;
+      if (!data?.length) throw new Error('The product no longer exists or you do not have permission to delete it.');
+      imageUrlToRemove = product.image_url;
+    }
     await loadProducts();
-  } catch {
-    showMessage(notice, 'This product could not be deleted. Please try again.', 'error');
+    if (imageUrlToRemove) {
+      try {
+        const path = productImagePath(imageUrlToRemove);
+        if (path) {
+          const {error} = await db.storage.from('product_images').remove([path]);
+          if (error) throw error;
+        }
+      } catch (error) {
+        const detail = error && typeof error.message === 'string' ? error.message : String(error);
+        showMessage(notice, '“' + product.name + '” was removed from the collection, but its image could not be deleted from storage: ' + detail, 'error');
+        return;
+      }
+    }
+    showMessage(notice, product.website_key
+      ? '“' + product.name + '” is hidden from the website. Edit it and set it to Visible to restore it.'
+      : '“' + product.name + '” deleted from the collection and website.', 'success');
+  } catch (error) {
+    const detail = error && typeof error.message === 'string' ? error.message : String(error);
+    showMessage(notice, 'Could not delete “' + product.name + '”: ' + detail, 'error');
   }
 });
 

@@ -137,13 +137,22 @@
       const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
       });
-      const [visible, hidden] = await Promise.all([
-        client.from('products').select('id, name, description, price, image_url, website_key')
-          .eq('is_visible', true).order('created_at', {ascending: true}),
+      let [visible, hidden] = await Promise.all([
+        client.from('products').select('id, name, description, price, image_url, website_key, sort_order, created_at')
+          .eq('is_visible', true).order('sort_order', {ascending: true}).order('created_at', {ascending: true}),
         client.rpc('hidden_website_product_keys'),
       ]);
+      if (visible.error && visible.error.code === '42703'
+        && typeof visible.error.message === 'string' && visible.error.message.includes('sort_order')) {
+        console.warn('Product ordering is not enabled yet. Run the updated supabase/products.sql script to enable it.');
+        const legacy = await client.from('products').select('id, name, description, price, image_url, website_key')
+          .eq('is_visible', true).order('created_at', {ascending: true});
+        if (legacy.error) throw legacy.error;
+        visible = legacy;
+      }
       if (visible.error) throw visible.error;
-      const hiddenKeys = new Set(hidden.error ? [] : (hidden.data || []).map(row => typeof row === 'string' ? row : Object.values(row)[0]));
+      if (hidden.error) throw hidden.error;
+      const hiddenKeys = new Set((hidden.data || []).map(row => typeof row === 'string' ? row : Object.values(row)[0]));
       const existingByKey = new Map(
         [...grid.querySelectorAll('.product[data-product-key]')]
         .map(card => [card.dataset.productKey, card]),

@@ -109,6 +109,8 @@ td.product-cell strong{display:block;font-size:13px;font-weight:600}
 .status.unpublished{background:#eeeee8;color:var(--muted)}
 .row-actions{display:flex;gap:6px}
 .row-actions .btn{padding:7px 10px;min-height:36px;font-size:11px}
+.row-actions .btn[data-move]{min-width:34px;padding:6px}
+.row-actions .btn:disabled{opacity:.35;cursor:not-allowed}
 .empty{padding:38px 16px;border:1px dashed var(--line);margin-top:4px}
 .empty strong{display:block;font:500 25px 'Playfair Display',Georgia,serif;color:var(--ink);margin-bottom:8px}
 .empty p{font-size:12px;margin:0 auto;max-width:290px}

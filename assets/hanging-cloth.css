@@ -53,10 +53,14 @@
 
 @media (max-width: 500px) {
   .navlinks {
-    display: grid;
-    grid-template-columns: repeat(2, max-content);
-    justify-content: center;
-    column-gap: var(--space-3);
+    display: flex;
+    flex: 0 0 calc(100% + 92px);
+    width: calc(100% + 92px);
+    justify-content: space-between;
+    margin-top: 42px;
+    margin-right: -92px;
+    font-size: 9px;
+    letter-spacing: 0.04em;
   }
 }
 

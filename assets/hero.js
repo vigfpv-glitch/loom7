@@ -55,11 +55,22 @@
   const title = document.getElementById('hero-title');
   const image = document.getElementById('hero-image');
   const slideshow = image && image.parentElement;
+  const indicators = slideshow && slideshow.querySelector('.hero-indicators');
   let slides = slideshow ? Array.from(slideshow.querySelectorAll('[data-hero-slide]')) : [];
-  if (!title || !image || !slideshow) return;
+  if (!title || !image || !slideshow || !indicators) return;
 
   let activeSlideIndex = 0;
   let slideTimer = null;
+
+  function updateIndicators() {
+    const buttons = Array.from(indicators.querySelectorAll('[data-hero-go-to]'));
+    buttons.forEach((button, index) => {
+      const unavailable = !slides[index] || slides[index].hidden || slides[index].classList.contains('is-unavailable');
+      button.hidden = unavailable;
+      button.setAttribute('aria-current', String(index === activeSlideIndex && !unavailable));
+    });
+    indicators.hidden = buttons.filter(button => !button.hidden).length < 2;
+  }
 
   function showSlide(startIndex) {
     const nextOffset = slides.findIndex((_, offset) => {
@@ -78,8 +89,14 @@
       slide.classList.toggle('is-active', active);
       slide.setAttribute('aria-hidden', String(!active));
     });
+    updateIndicators();
     slideshow.classList.remove('is-fallback');
   }
+
+  indicators.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-hero-go-to]');
+    if (button && indicators.contains(button)) showSlide(Number(button.dataset.heroGoTo));
+  });
 
   function handleSlideError(slide) {
     slide.addEventListener('error', () => {
@@ -92,6 +109,7 @@
       slide.hidden = true;
       slide.classList.add('is-unavailable');
       if (slide.classList.contains('is-active')) showSlide((slides.indexOf(slide) + 1) % slides.length);
+      updateIndicators();
       if (slides.every((item) => item.hidden || item.classList.contains('is-unavailable'))) {
         slideshow.classList.add('is-fallback');
       }
@@ -100,6 +118,7 @@
 
   function setSlides(imageUrls) {
     slides.slice(1).forEach(slide => slide.remove());
+    indicators.replaceChildren();
     slides = [image];
     image.hidden = false;
     image.classList.remove('is-unavailable');
@@ -117,6 +136,15 @@
       handleSlideError(slide);
       slideshow.append(slide);
       slides.push(slide);
+    });
+    slides.forEach((_, index) => {
+      const button = document.createElement('button');
+      button.className = 'hero-indicator';
+      button.type = 'button';
+      button.dataset.heroGoTo = String(index);
+      button.setAttribute('aria-label', `Show hero image ${index + 1} of ${slides.length}`);
+      button.setAttribute('aria-current', String(index === 0));
+      indicators.append(button);
     });
     activeSlideIndex = 0;
     showSlide(0);

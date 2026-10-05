@@ -401,6 +401,57 @@ p {
   opacity: 1;
 }
 
+.hero-indicators {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+
+.hero-indicators[hidden] {
+  display: none;
+}
+
+.hero-indicator {
+  display: grid;
+  flex: 0 0 12px;
+  width: 12px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  place-items: center;
+  background: transparent;
+  cursor: pointer;
+}
+
+.hero-indicator::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  transition: width 220ms ease, background-color 220ms ease;
+}
+
+.hero-indicator[aria-current="true"] {
+  flex-basis: 24px;
+  width: 24px;
+}
+
+.hero-indicator[aria-current="true"]::before {
+  width: 24px;
+  background: var(--color-accent);
+}
+
+.hero-indicator:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
 .hero-image::before {
   content: 'LOOM7';
   position: absolute;

@@ -9,15 +9,18 @@
   const descriptionLabel = document.querySelector('[data-product-description]');
   const image = document.querySelector('[data-product-image]');
   const media = document.querySelector('[data-product-media]');
-  const messageLink = document.querySelector('[data-product-message]');
+  const messageButton = document.querySelector('[data-product-message]');
+  const enquiryStatus = document.querySelector('[data-enquiry-status]');
+  const sizeStatus = document.querySelector('[data-size-status]');
+  const sizeOptions = [...document.querySelectorAll('input[name="product-size"]')];
   const priceFormatter = new Intl.NumberFormat('en-IN', {
     style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2,
   });
   const builtInProducts = {
-    'roots-01': {name: 'Roots 01', description: 'A statement piece from The Roots.', image_url: 'assets/roots-01.webp'},
-    'roots-02': {name: 'Roots 02', description: 'A statement piece from The Roots.', image_url: 'assets/roots-02.webp'},
-    'roots-03': {name: 'Roots 03', description: 'A statement piece from The Roots.', image_url: 'assets/roots-03.webp'},
-    'roots-04': {name: 'Roots 04', description: 'A statement piece from The Roots.', image_url: 'assets/roots-04.webp'},
+    'roots-01': {name: 'Roots 01', description: 'A statement piece from The Roots.', image_url: 'assets/roots-01.webp', available_sizes: ['S', 'M', 'L', 'XL']},
+    'roots-02': {name: 'Roots 02', description: 'A statement piece from The Roots.', image_url: 'assets/roots-02.webp', available_sizes: ['S', 'M', 'L', 'XL']},
+    'roots-03': {name: 'Roots 03', description: 'A statement piece from The Roots.', image_url: 'assets/roots-03.webp', available_sizes: ['S', 'M', 'L', 'XL']},
+    'roots-04': {name: 'Roots 04', description: 'A statement piece from The Roots.', image_url: 'assets/roots-04.webp', available_sizes: ['S', 'M', 'L', 'XL']},
   };
 
   document.getElementById('year').textContent = new Date().getFullYear();
@@ -42,6 +45,17 @@
     title.textContent = product.name;
     document.title = `${product.name} | Loom7`;
     descriptionLabel.textContent = product.description || '';
+
+    const availableSizes = Array.isArray(product.available_sizes)
+      ? product.available_sizes
+      : ['S', 'M', 'L', 'XL'];
+    sizeOptions.forEach(option => {
+      option.checked = false;
+      option.disabled = !availableSizes.includes(option.value);
+    });
+    messageButton.disabled = true;
+    sizeStatus.hidden = availableSizes.length > 0;
+    sizeStatus.textContent = availableSizes.length > 0 ? '' : 'No sizes are currently available.';
 
     const price = product.price === null || product.price === undefined || product.price === ''
       ? null : Number(product.price);
@@ -68,11 +82,42 @@
       image.hidden = false;
       media.classList.remove('is-fallback');
     };
-    messageLink.href = 'https://ig.me/m/loom7.co';
-    messageLink.dataset.message = `Hi Loom7, I'm interested in ${product.name}.`;
     detail.hidden = false;
     status.hidden = true;
   }
+
+  sizeOptions.forEach(option => {
+    option.addEventListener('change', () => {
+      messageButton.disabled = !sizeOptions.some(size => size.checked && !size.disabled);
+      enquiryStatus.hidden = true;
+      enquiryStatus.textContent = '';
+      enquiryStatus.classList.remove('is-error');
+    });
+  });
+
+  messageButton.addEventListener('click', async () => {
+    const selectedSize = sizeOptions.find(option => option.checked && !option.disabled);
+    if (!selectedSize) {
+      enquiryStatus.textContent = 'Please select a size before enquiring.';
+      enquiryStatus.hidden = false;
+      enquiryStatus.classList.add('is-error');
+      sizeOptions[0].focus();
+      return;
+    }
+
+    const message = `Hi Loom7, I would like to enquire about purchasing ${title.textContent} in size ${selectedSize.value}.`;
+    window.open('https://ig.me/m/loom7.co', '_blank', 'noopener,noreferrer');
+    try {
+      await navigator.clipboard.writeText(message);
+      enquiryStatus.textContent = 'Your enquiry message was copied. Paste it into the Instagram chat to send.';
+      enquiryStatus.classList.remove('is-error');
+    } catch (error) {
+      console.error('Unable to copy the Instagram enquiry message.', error);
+      enquiryStatus.textContent = `Instagram opened. Send this message: ${message}`;
+      enquiryStatus.classList.add('is-error');
+    }
+    enquiryStatus.hidden = false;
+  });
 
   async function loadProduct() {
     if (!key && !id) {
@@ -96,7 +141,7 @@
         auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
       });
       const productQuery = client.from('products')
-        .select('id, name, description, price, image_url, website_key')
+        .select('id, name, description, price, image_url, website_key, available_sizes')
         .eq('is_visible', true);
       const [result, hidden] = await Promise.all([
         (key ? productQuery.eq('website_key', key) : productQuery.eq('id', id)).maybeSingle(),

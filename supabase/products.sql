@@ -7,9 +7,13 @@ begin;
 alter table public.products add column if not exists website_key text;
 alter table public.products add column if not exists price numeric(10,2);
 alter table public.products add column if not exists sort_order integer not null default 0;
+alter table public.products add column if not exists available_sizes text[] not null default array['S', 'M', 'L', 'XL']::text[];
 alter table public.products drop constraint if exists products_price_nonnegative;
 alter table public.products add constraint products_price_nonnegative
   check (price is null or price >= 0);
+alter table public.products drop constraint if exists products_available_sizes_valid;
+alter table public.products add constraint products_available_sizes_valid
+  check (available_sizes <@ array['S', 'M', 'L', 'XL']::text[]);
 alter table public.products drop constraint if exists products_website_key_format;
 alter table public.products add constraint products_website_key_format
   check (website_key is null or website_key ~ '^[a-z0-9-]{1,64}$');

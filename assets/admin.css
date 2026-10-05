@@ -79,6 +79,12 @@ input::placeholder,textarea::placeholder{color:#84867a;font-size:12px}
 .check{padding:16px 0;margin:6px 0 22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);align-items:flex-start;color:var(--ink);cursor:pointer}
 .check input{accent-color:var(--accent);width:17px;height:17px;flex-shrink:0;margin:3px 2px 0 0}
 .check small{display:block;font-size:10px;color:var(--muted);margin-top:3px}
+.size-availability{border:0;padding:0;margin:0 0 20px;min-width:0}
+.size-availability legend{font-size:12px;font-weight:600;margin-bottom:8px}
+.size-checks{display:flex;flex-wrap:wrap;gap:8px}
+.size-checks .check{align-items:center;gap:6px;padding:0;margin:0;border:0}
+.size-checks .check input{margin:0}
+.size-availability>.field-hint{display:block;margin-top:8px}
 .actions{flex-wrap:wrap;gap:10px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:16px;min-height:42px;border-radius:2px;font-size:12px;padding:10px 16px;transition:background .2s,border-color .2s,transform .2s}
 .btn:hover{background:#eeeee5}
@@ -151,5 +157,6 @@ dialog p{font-size:13px;color:var(--muted)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .edit-dialog{width:min(560px,calc(100% - 32px));max-height:calc(100vh - 32px);overflow:auto}
 .edit-dialog fieldset{border:0;padding:0;margin:0;min-width:0}
+.edit-dialog .size-availability{margin-bottom:20px}
 .edit-dialog .image-preview{flex-wrap:wrap}
 .edit-dialog .image-preview .btn{margin-left:auto}

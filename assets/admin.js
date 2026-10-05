@@ -28,6 +28,18 @@ let aboutLoadVersion = 0;
 const priceFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2,
 });
+const productSizes = ['S', 'M', 'L', 'XL'];
+
+function selectedProductSizes(name) {
+  return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(input => input.value);
+}
+
+function setProductSizes(name, availableSizes) {
+  const sizes = Array.isArray(availableSizes) ? availableSizes : productSizes;
+  document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+    input.checked = sizes.includes(input.value);
+  });
+}
 
 function showMessage(node, text, type = '') {
   node.textContent = text;
@@ -481,6 +493,7 @@ async function loadWebsiteProducts() {
       price: null,
       image_url: image || '',
       is_visible: true,
+      available_sizes: [...productSizes],
       is_website_product: true,
     };
   }).filter(product => product.name);
@@ -756,6 +769,7 @@ function openEditDialog(product) {
   $('editName').value = product.name;
   $('editDescription').value = product.description || '';
   $('editPrice').value = product.price ?? '';
+  setProductSizes('edit-product-sizes', product.available_sizes);
   $('editVisibility').value = product.is_visible ? 'visible' : 'hidden';
   $('editHeading').textContent = 'Edit “' + product.name + '”';
   $('editNotice').classList.add('hidden');
@@ -785,6 +799,7 @@ $('editForm').addEventListener('submit', async event => {
   if (!$('editForm').reportValidity()) return;
   const values = {name, description: $('editDescription').value.trim() || null,
     price: $('editPrice').value === '' ? null : Number($('editPrice').value),
+    available_sizes: selectedProductSizes('edit-product-sizes'),
     image_url: product.image_url || null, is_visible: $('editVisibility').value === 'visible'};
   let uploaded = null;
   editSaving = true;
@@ -881,6 +896,7 @@ $('productForm').addEventListener('submit', async event => {
   const uploadedPosition = products.length + 1;
   const values = {name, description: $('productDescription').value.trim() || null,
     price: $('productPrice').value === '' ? null : Number($('productPrice').value),
+    available_sizes: selectedProductSizes('product-sizes'),
     image_url: currentImageUrl || null, is_visible: $('productVisible').checked, sort_order: uploadedPosition};
   let uploaded = null;
   setBusy($('saveButton'), true, 'Saving…');

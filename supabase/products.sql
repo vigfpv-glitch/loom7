@@ -101,6 +101,68 @@ $$;
 revoke all on function public.reorder_product(uuid, integer) from public;
 grant execute on function public.reorder_product(uuid, integer) to authenticated;
 
+create table if not exists public.collection_product_order (
+  product_key text primary key check (product_key in ('roots-01', 'roots-02', 'roots-03', 'roots-04')),
+  position integer not null check (position between 1 and 4)
+);
+
+insert into public.collection_product_order (product_key, position)
+values ('roots-01', 1), ('roots-02', 2), ('roots-03', 3), ('roots-04', 4)
+on conflict (product_key) do nothing;
+
+alter table public.collection_product_order enable row level security;
+revoke all on public.collection_product_order from anon, authenticated;
+grant select on public.collection_product_order to anon, authenticated;
+
+drop policy if exists "Anyone can read built-in product order" on public.collection_product_order;
+create policy "Anyone can read built-in product order" on public.collection_product_order
+  for select to anon, authenticated using (true);
+
+create or replace function public.reorder_builtin_product(p_website_key text, p_new_position integer)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  current_position integer;
+begin
+  if not (select public.is_loom7_admin()) then
+    raise exception 'Only Loom7 admins can reorder products.';
+  end if;
+
+  if p_website_key is null
+    or p_website_key not in ('roots-01', 'roots-02', 'roots-03', 'roots-04')
+    or p_new_position < 1 or p_new_position > 4 then
+    raise exception 'Choose one of the four Roots products and a position from 1 to 4.';
+  end if;
+
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('public.collection_product_order'));
+
+  select position into current_position
+  from public.collection_product_order
+  where product_key = p_website_key
+  for update;
+  if not found then
+    raise exception 'The built-in product order is not initialized. Run supabase/products.sql again.';
+  end if;
+  if current_position = p_new_position then
+    return;
+  end if;
+
+  update public.collection_product_order
+  set position = case
+    when product_key = p_website_key then p_new_position
+    when current_position < p_new_position
+      and position > current_position and position <= p_new_position then position - 1
+    when current_position > p_new_position
+      and position >= p_new_position and position < current_position then position + 1
+    else position
+  end
+  where product_key = p_website_key
+    or (current_position < p_new_position and position > current_position and position <= p_new_position)
+    or (current_position > p_new_position and position >= p_new_position and position < current_position);
+end;
+$$;
+revoke all on function public.reorder_builtin_product(text, integer) from public;
+grant execute on function public.reorder_builtin_product(text, integer) to authenticated;
+
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('product_images', 'product_images', true, 3145728, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do update set public = excluded.public,

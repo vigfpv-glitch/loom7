@@ -25,6 +25,7 @@ let aboutImagePreviewUrl = '';
 let aboutLoaded = false;
 let aboutSchemaReady = false;
 let aboutLoadVersion = 0;
+let builtinProductOrder = ['roots-01', 'roots-02', 'roots-03', 'roots-04'];
 const priceFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2,
 });
@@ -494,7 +495,8 @@ function mergeProducts(savedProducts, websiteProducts) {
     .map(websiteProduct => {
       const saved = savedProducts.find(product => product.website_key === websiteProduct.website_key);
       return saved ? {...saved, is_website_product: true} : websiteProduct;
-    });
+    })
+    .sort((a, b) => builtinProductOrder.indexOf(a.website_key) - builtinProductOrder.indexOf(b.website_key));
   const uploaded = savedProducts.filter(product => !product.website_key).sort((a, b) =>
     Number(a.sort_order || 0) - Number(b.sort_order || 0)
     || String(a.created_at || '').localeCompare(String(b.created_at || ''))
@@ -509,24 +511,36 @@ async function loadProducts() {
   $('collectionRetry').classList.add('hidden');
   loading(box, 'Loading your collection…');
   try {
-    const [saved, website] = await Promise.allSettled([
+    const [saved, website, positions] = await Promise.allSettled([
       (async () => {
         const {data, error} = await db.from('products').select('*').order('created_at', {ascending: false});
         if (error) throw error;
         return data || [];
       })(),
       loadWebsiteProducts(),
+      (async () => {
+        const {data, error} = await db.from('collection_product_order').select('product_key, position');
+        if (error) throw error;
+        return data || [];
+      })(),
     ]);
     if (version !== productLoadVersion) return;
+    if (positions.status === 'fulfilled') {
+      const positionsByKey = new Map(positions.value.map(item => [item.product_key, Number(item.position)]));
+      builtinProductOrder = ['roots-01', 'roots-02', 'roots-03', 'roots-04']
+        .sort((a, b) => (positionsByKey.get(a) ?? Infinity) - (positionsByKey.get(b) ?? Infinity));
+    }
     if (saved.status === 'rejected' && website.status === 'rejected') throw new Error('Collection unavailable.');
     products = mergeProducts(saved.status === 'fulfilled' ? saved.value : [], website.status === 'fulfilled' ? website.value : []);
     $('totalProducts').textContent = products.length;
     $('visibleProducts').textContent = products.filter(product => product.is_visible).length;
     renderProducts();
-    if (saved.status === 'rejected' || website.status === 'rejected') {
+    if (saved.status === 'rejected' || website.status === 'rejected' || positions.status === 'rejected') {
       showMessage($('collectionNotice'), saved.status === 'rejected'
         ? 'Showing the website collection. Saved admin products could not be loaded.'
-        : 'Showing saved admin products. The website collection could not be loaded.', 'error');
+        : website.status === 'rejected'
+          ? 'Showing saved admin products. The website collection could not be loaded.'
+          : 'Product order controls for the four built-in Roots pieces need the latest supabase/products.sql migration.', 'error');
       $('collectionRetry').classList.remove('hidden');
     }
   } catch {
@@ -570,12 +584,17 @@ function renderProducts() {
       ? null : Number(product.price);
     const priceText = Number.isFinite(price) && price >= 0 ? escapeHtml(priceFormatter.format(price)) : '—';
     const uploadedPosition = product.website_key ? 0 : uploadedProducts.findIndex(item => item.id === product.id) + 1;
+    const builtinPosition = product.website_key ? builtinProductOrder.indexOf(product.website_key) + 1 : 0;
     const actions = '<button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button>'
-      + (product.website_key ? '' :
+      + (product.website_key
+        ? '<button type="button" class="btn" data-builtin-move="' + escapeHtml(product.website_key) + '" data-position="' + (builtinPosition - 1) + '" aria-label="Move ' + name + ' up"' + (builtinPosition <= 1 ? ' disabled' : '') + '>↑</button>'
+          + '<button type="button" class="btn" data-builtin-move="' + escapeHtml(product.website_key) + '" data-position="' + (builtinPosition + 1) + '" aria-label="Move ' + name + ' down"' + (builtinPosition >= builtinProductOrder.length ? ' disabled' : '') + '>↓</button>'
+        :
         '<button type="button" class="btn" data-move="' + id + '" data-position="' + (uploadedPosition - 1) + '" aria-label="Move ' + name + ' up"' + (uploadedPosition <= 1 ? ' disabled' : '') + '>↑</button>'
         + '<button type="button" class="btn" data-move="' + id + '" data-position="' + (uploadedPosition + 1) + '" aria-label="Move ' + name + ' down"' + (uploadedPosition >= uploadedProducts.length ? ' disabled' : '') + '>↓</button>')
       + '<button type="button" class="btn danger" data-delete="' + id + '" aria-label="Delete ' + name + '">Delete</button>';
-    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td>' + priceText + '</td><td>' + (uploadedPosition ? uploadedPosition : '—') + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
+    const position = product.website_key ? builtinPosition : uploadedPosition;
+    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td>' + priceText + '</td><td>' + (position || '—') + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
   }).join('') + '</tbody></table>';
   box.querySelectorAll('img').forEach(image => image.addEventListener('error', () => {
     const placeholder = document.createElement('span');
@@ -600,6 +619,9 @@ function renderProducts() {
     const product = products.find(item => String(item.id) === button.dataset.move);
     if (product) reorderProduct(product, Number(button.dataset.position));
   }));
+  box.querySelectorAll('[data-builtin-move]').forEach(button => button.addEventListener('click', () => {
+    reorderBuiltinProduct(button.dataset.builtinMove, Number(button.dataset.position));
+  }));
 }
 
 let reorderingProduct = false;
@@ -622,6 +644,30 @@ async function reorderProduct(product, position) {
   } finally {
     reorderingProduct = false;
     if ($('productsList').querySelector('table')) renderProducts();
+  }
+
+  let reorderingBuiltinProduct = false;
+  async function reorderBuiltinProduct(websiteKey, position) {
+    if (!db || reorderingBuiltinProduct) return;
+    reorderingBuiltinProduct = true;
+    $('productsList').querySelectorAll('[data-builtin-move]').forEach(button => { button.disabled = true; });
+    try {
+      const {error} = await db.rpc('reorder_builtin_product', {
+        p_website_key: websiteKey,
+        p_new_position: position,
+      });
+      if (error) throw error;
+      await loadProducts();
+      const product = products.find(item => item.website_key === websiteKey);
+      showMessage(notice, '“' + (product?.name || websiteKey) + '” moved to position ' + position + ' among the Roots products.', 'success');
+    } catch (error) {
+      const detail = error && typeof error.message === 'string' ? error.message : String(error);
+      showMessage(notice, 'Could not change the Roots product position: ' + detail
+        + '. Run the updated supabase/products.sql script, then try again.', 'error');
+    } finally {
+      reorderingBuiltinProduct = false;
+      if ($('productsList').querySelector('table')) renderProducts();
+    }
   }
 }
 

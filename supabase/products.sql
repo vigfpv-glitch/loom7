@@ -8,6 +8,8 @@ alter table public.products add column if not exists website_key text;
 alter table public.products add column if not exists price numeric(10,2);
 alter table public.products add column if not exists sort_order integer not null default 0;
 alter table public.products add column if not exists available_sizes text[] not null default array['S', 'M', 'L', 'XL']::text[];
+alter table public.products add column if not exists gallery_images text[] not null default array[]::text[];
+alter table public.products add column if not exists video_url text;
 alter table public.products drop constraint if exists products_price_nonnegative;
 alter table public.products add constraint products_price_nonnegative
   check (price is null or price >= 0);
@@ -227,7 +229,7 @@ create trigger products_compact_order_after_delete after delete on public.produc
   for each row execute function public.compact_product_order_after_delete();
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('product_images', 'product_images', true, 3145728, array['image/jpeg', 'image/png', 'image/webp'])
+values ('product_images', 'product_images', true, 26214400, array['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'])
 on conflict (id) do update set public = excluded.public,
   file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
 

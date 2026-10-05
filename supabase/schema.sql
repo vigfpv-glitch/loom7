@@ -14,6 +14,8 @@ create table if not exists public.products (
   description text check (description is null or char_length(description) <= 1000),
   price numeric(10,2) check (price is null or price >= 0),
   image_url text check (image_url is null or char_length(image_url) <= 1000),
+  gallery_images text[] not null default array[]::text[],
+  video_url text check (video_url is null or char_length(video_url) <= 1000),
   is_visible boolean not null default true,
   available_sizes text[] not null default array['S', 'M', 'L', 'XL']::text[]
     check (available_sizes <@ array['S', 'M', 'L', 'XL']::text[]),

@@ -9,6 +9,7 @@
   const descriptionLabel = document.querySelector('[data-product-description]');
   const image = document.querySelector('[data-product-image]');
   const media = document.querySelector('[data-product-media]');
+  const mediaGrid = document.querySelector('[data-product-media-grid]');
   const messageButton = document.querySelector('[data-product-message]');
   const enquiryStatus = document.querySelector('[data-enquiry-status]');
   const sizeStatus = document.querySelector('[data-size-status]');
@@ -109,6 +110,31 @@
       image.hidden = false;
       media.classList.remove('is-fallback');
     };
+    mediaGrid.replaceChildren();
+    if (Array.isArray(product.gallery_images)) {
+      product.gallery_images.forEach((imageUrl, index) => {
+        const src = safeImage(imageUrl);
+        if (!src) return;
+        const galleryImage = document.createElement('img');
+        galleryImage.src = src;
+        galleryImage.alt = `${product.name} — additional photo ${index + 1}`;
+        galleryImage.loading = 'lazy';
+        galleryImage.decoding = 'async';
+        galleryImage.className = 'product-detail-gallery-photo';
+        mediaGrid.append(galleryImage);
+      });
+    }
+    const videoSrc = safeImage(product.video_url);
+    if (videoSrc) {
+      const video = document.createElement('video');
+      video.src = videoSrc;
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+      video.setAttribute('aria-label', `${product.name} product video`);
+      video.className = 'product-detail-video';
+      mediaGrid.append(video);
+    }
     detail.hidden = false;
     status.hidden = true;
   }
@@ -170,7 +196,7 @@
         auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
       });
       const productQuery = client.from('products')
-        .select('id, name, description, price, image_url, website_key, available_sizes')
+        .select('id, name, description, price, image_url, website_key, available_sizes, gallery_images, video_url')
         .eq('is_visible', true);
       const [result, hidden] = await Promise.all([
         (key ? productQuery.eq('website_key', key) : productQuery.eq('id', id)).maybeSingle(),

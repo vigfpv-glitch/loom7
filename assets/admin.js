@@ -14,6 +14,13 @@ let previewObjectUrl = '';
 let editingProduct = null;
 let editSaving = false;
 let editPreviewObjectUrl = '';
+let productGalleryPreviewUrls = [];
+let productVideoPreviewUrl = '';
+let editGalleryPreviewUrls = [];
+let editVideoPreviewUrl = '';
+let editGalleryUrls = [];
+let editRemovedGalleryUrls = new Set();
+let editVideoUrl = '';
 let currentHeroImages = [...window.Loom7Hero.defaults.image_urls];
 let heroNewImages = [];
 let heroPreviewObjectUrls = [];
@@ -693,6 +700,21 @@ function updatePreview() {
   }
 }
 
+function updateNewGalleryPreview() {
+  productGalleryPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  productGalleryPreviewUrls = [...$('productGalleryImages').files].map(file => URL.createObjectURL(file));
+  renderMediaPreviews($('productGalleryPreview'), productGalleryPreviewUrls.map((url, index) => ({
+    url, name: $('productGalleryImages').files[index].name,
+  })));
+}
+
+function updateNewVideoPreview() {
+  if (productVideoPreviewUrl) URL.revokeObjectURL(productVideoPreviewUrl);
+  const file = $('productVideo').files[0];
+  productVideoPreviewUrl = file ? URL.createObjectURL(file) : '';
+  renderMediaPreviews($('productVideoPreview'), productVideoPreviewUrl ? [{url: productVideoPreviewUrl, type: 'video'}] : []);
+}
+
 function updateDescriptionCount() {
   $('descriptionCount').textContent = $('productDescription').value.length.toLocaleString() + ' / 1,000 characters';
 }
@@ -706,23 +728,41 @@ function resetProductForm() {
   $('productForm').reset();
   $('productVisible').checked = true;
   $('productImage').setCustomValidity('');
+  $('productGalleryImages').setCustomValidity('');
+  $('productVideo').setCustomValidity('');
+  productGalleryPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  productGalleryPreviewUrls = [];
+  if (productVideoPreviewUrl) URL.revokeObjectURL(productVideoPreviewUrl);
+  productVideoPreviewUrl = '';
+  $('productGalleryPreview').replaceChildren();
+  $('productVideoPreview').replaceChildren();
   currentImageUrl = '';
   updateDescriptionCount();
   updatePreview();
 }
 
 const productImageTypes = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'};
+const productVideoTypes = {'video/mp4': 'mp4', 'video/webm': 'webm'};
+const productImageLimit = 3 * 1024 * 1024;
+const productVideoLimit = 25 * 1024 * 1024;
 
 function validProductImage(file) {
-  return !file || (file.type in productImageTypes && file.size > 0 && file.size <= 3 * 1024 * 1024);
+  return !file || (file.type in productImageTypes && file.size > 0 && file.size <= productImageLimit);
 }
 
-async function uploadProductImage(file) {
-  const path = 'products/' + crypto.randomUUID() + '.' + productImageTypes[file.type];
+function validProductVideo(file) {
+  return !file || (file.type in productVideoTypes && file.size > 0 && file.size <= productVideoLimit);
+}
+
+async function uploadProductAsset(file, types) {
+  const path = 'products/' + crypto.randomUUID() + '.' + types[file.type];
   const {error} = await db.storage.from('product_images').upload(path, file, {contentType: file.type, upsert: false});
-  if (error) throw new Error('Image upload failed. Check that supabase/products.sql has been run.');
+  if (error) throw new Error('Product media upload failed. Check that the updated supabase/products.sql has been run.');
   return {path, url: db.storage.from('product_images').getPublicUrl(path).data.publicUrl};
 }
+
+const uploadProductImage = file => uploadProductAsset(file, productImageTypes);
+const uploadProductVideo = file => uploadProductAsset(file, productVideoTypes);
 
 function productImagePath(url) {
   if (!url) return '';
@@ -731,10 +771,45 @@ function productImagePath(url) {
   try { return decodeURIComponent(url.slice(prefix.length).split('?')[0]); } catch { return ''; }
 }
 
-async function removeProductImage(url) {
-  const path = productImagePath(url);
-  if (!path) return;
-  try { await db.storage.from('product_images').remove([path]); } catch {}
+async function removeProductAssets(urls) {
+  const paths = [...new Set(urls.map(productImagePath).filter(Boolean))];
+  if (!paths.length) return;
+  const {error} = await db.storage.from('product_images').remove(paths);
+  if (error) throw error;
+}
+
+async function cleanupUploadedAssets(assets) {
+  try {
+    await removeProductAssets(assets.map(asset => asset.url));
+    return '';
+  } catch (error) {
+    console.error('Unable to clean up uploaded product media.', error);
+    return error && typeof error.message === 'string' ? error.message : String(error);
+  }
+}
+
+function renderMediaPreviews(container, records, {removable = false, onRemove} = {}) {
+  container.replaceChildren();
+  records.forEach(record => {
+    const item = document.createElement('div');
+    item.className = 'media-preview-item';
+    if (record.removed) item.classList.add('is-removed');
+    const media = document.createElement(record.type === 'video' ? 'video' : 'img');
+    media.src = record.url;
+    if (record.type === 'video') media.controls = true;
+    else media.alt = record.name || 'Product photo preview';
+    item.append(media);
+    if (removable) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'media-preview-remove';
+      button.textContent = record.removed ? 'Keep' : 'Remove';
+      button.setAttribute('aria-pressed', String(Boolean(record.removed)));
+      button.addEventListener('click', () => onRemove(record, item));
+      item.append(button);
+    }
+    container.append(item);
+  });
 }
 
 function updateEditPreview() {
@@ -756,6 +831,49 @@ function updateEditPreview() {
   image.src = url;
 }
 
+function updateEditGalleryPreview() {
+  editGalleryPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  const newFiles = [...$('editGalleryImages').files];
+  editGalleryPreviewUrls = newFiles.map(file => URL.createObjectURL(file));
+  const existing = editGalleryUrls.map(url => ({
+    url,
+    type: 'image',
+    removed: editRemovedGalleryUrls.has(url),
+  }));
+  const added = editGalleryPreviewUrls.map((url, index) => ({
+    url,
+    type: 'image',
+    name: newFiles[index].name,
+    isNew: true,
+    fileIndex: index,
+  }));
+  renderMediaPreviews($('editGalleryPreview'), [...existing, ...added], {
+    removable: true,
+    onRemove: record => {
+      if (record.isNew) {
+        const remainingFiles = [...$('editGalleryImages').files].filter((file, index) => index !== record.fileIndex);
+        const transfer = new DataTransfer();
+        remainingFiles.forEach(file => transfer.items.add(file));
+        $('editGalleryImages').files = transfer.files;
+        updateEditGalleryPreview();
+        return;
+      }
+      if (editRemovedGalleryUrls.has(record.url)) editRemovedGalleryUrls.delete(record.url);
+      else editRemovedGalleryUrls.add(record.url);
+      updateEditGalleryPreview();
+    },
+  });
+}
+
+function updateEditVideoPreview() {
+  if (editVideoPreviewUrl) URL.revokeObjectURL(editVideoPreviewUrl);
+  const file = $('editProductVideo').files[0];
+  editVideoPreviewUrl = file ? URL.createObjectURL(file) : '';
+  const url = editVideoPreviewUrl || editVideoUrl;
+  $('removeProductVideoLabel').classList.toggle('hidden', !editVideoUrl || Boolean(file));
+  renderMediaPreviews($('editVideoPreview'), url ? [{url, type: 'video'}] : []);
+}
+
 function updateEditDescriptionCount() {
   $('editDescriptionCount').textContent = $('editDescription').value.length.toLocaleString() + ' / 1,000 characters';
 }
@@ -770,11 +888,19 @@ function openEditDialog(product) {
   $('editDescription').value = product.description || '';
   $('editPrice').value = product.price ?? '';
   setProductSizes('edit-product-sizes', product.available_sizes);
+  editGalleryUrls = Array.isArray(product.gallery_images) ? product.gallery_images.filter(safeImage) : [];
+  editRemovedGalleryUrls = new Set();
+  editVideoUrl = safeImage(product.video_url);
+  $('editGalleryImages').value = '';
+  $('editProductVideo').value = '';
+  $('removeProductVideo').checked = false;
   $('editVisibility').value = product.is_visible ? 'visible' : 'hidden';
   $('editHeading').textContent = 'Edit “' + product.name + '”';
   $('editNotice').classList.add('hidden');
   updateEditDescriptionCount();
   updateEditPreview();
+  updateEditGalleryPreview();
+  updateEditVideoPreview();
   $('editDialog').showModal();
   $('editName').focus();
 }
@@ -784,6 +910,15 @@ function closeEditDialog(force = false) {
   if ($('editDialog').open) $('editDialog').close();
   editingProduct = null;
   $('editImage').value = '';
+  $('editGalleryImages').value = '';
+  $('editProductVideo').value = '';
+  editGalleryPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  editGalleryPreviewUrls = [];
+  if (editVideoPreviewUrl) URL.revokeObjectURL(editVideoPreviewUrl);
+  editVideoPreviewUrl = '';
+  editGalleryUrls = [];
+  editRemovedGalleryUrls = new Set();
+  editVideoUrl = '';
   if (editPreviewObjectUrl) URL.revokeObjectURL(editPreviewObjectUrl);
   editPreviewObjectUrl = '';
 }
@@ -794,39 +929,73 @@ $('editForm').addEventListener('submit', async event => {
   if (!db || !product || editSaving) return;
   const name = $('editName').value.trim();
   const file = $('editImage').files[0];
+  const galleryFiles = [...$('editGalleryImages').files];
+  const videoFile = $('editProductVideo').files[0];
   $('editName').setCustomValidity(name ? '' : 'Enter a product title.');
   $('editImage').setCustomValidity(validProductImage(file) ? '' : 'Choose a JPEG, PNG, or WebP image smaller than 3 MB.');
+  $('editGalleryImages').setCustomValidity(galleryFiles.every(validProductImage) ? '' : 'Choose JPEG, PNG, or WebP photos up to 3 MB each.');
+  $('editProductVideo').setCustomValidity(validProductVideo(videoFile) ? '' : 'Choose an MP4 or WebM video up to 25 MB.');
   if (!$('editForm').reportValidity()) return;
   const values = {name, description: $('editDescription').value.trim() || null,
     price: $('editPrice').value === '' ? null : Number($('editPrice').value),
     available_sizes: selectedProductSizes('edit-product-sizes'),
-    image_url: product.image_url || null, is_visible: $('editVisibility').value === 'visible'};
-  let uploaded = null;
+    image_url: product.image_url || null,
+    gallery_images: editGalleryUrls.filter(url => !editRemovedGalleryUrls.has(url)),
+    video_url: $('removeProductVideo').checked ? null : editVideoUrl || null,
+    is_visible: $('editVisibility').value === 'visible'};
+  const uploadedAssets = [];
+  const removedAssets = [
+    ...(file && product.image_url ? [product.image_url] : []),
+    ...[...editRemovedGalleryUrls],
+    ...((videoFile || $('removeProductVideo').checked) && editVideoUrl ? [editVideoUrl] : []),
+  ];
+  let saveSucceeded = false;
   editSaving = true;
   setBusy($('editSave'), true, 'Saving…');
   $('editFields').disabled = true;
   $('editNotice').classList.add('hidden');
   try {
+    const totalUploads = (file ? 1 : 0) + galleryFiles.length + (videoFile ? 1 : 0);
+    let uploadNumber = 0;
     if (file) {
-      $('editSave').textContent = 'Uploading image…';
-      uploaded = await uploadProductImage(file);
-      values.image_url = uploaded.url;
-      $('editSave').textContent = 'Saving…';
+      $('editSave').textContent = `Uploading media ${++uploadNumber} of ${totalUploads}…`;
+      const asset = await uploadProductImage(file);
+      uploadedAssets.push(asset);
+      values.image_url = asset.url;
     }
+    for (const galleryFile of galleryFiles) {
+      $('editSave').textContent = `Uploading media ${++uploadNumber} of ${totalUploads}…`;
+      const asset = await uploadProductImage(galleryFile);
+      uploadedAssets.push(asset);
+      values.gallery_images.push(asset.url);
+    }
+    if (videoFile) {
+      $('editSave').textContent = `Uploading media ${++uploadNumber} of ${totalUploads}…`;
+      const asset = await uploadProductVideo(videoFile);
+      uploadedAssets.push(asset);
+      values.video_url = asset.url;
+    }
+    $('editSave').textContent = 'Saving…';
     const result = product.is_website_product
       ? await db.from('products').upsert({...values, website_key: product.website_key}, {onConflict: 'website_key'}).select('id')
       : await db.from('products').update(values).eq('id', product.id).select('id');
     if (result.error) throw result.error;
     if (!result.data?.length) throw new Error('This product no longer exists or you no longer have access to it.');
-    if (uploaded && product.image_url !== uploaded.url) await removeProductImage(product.image_url);
-    uploaded = null;
+    saveSucceeded = true;
     editSaving = false;
     closeEditDialog();
     showMessage(notice, '“' + name + '” updated' + (values.is_visible ? ' and visible on the website.' : ' and hidden from the website.'), 'success');
+    try {
+      await removeProductAssets(removedAssets);
+    } catch (error) {
+      showMessage(notice, '“' + name + '” was saved, but replaced or removed media could not be deleted from storage: ' + (error.message || String(error)), 'error');
+    }
     if (!appView.classList.contains('hidden')) await loadProducts();
   } catch (error) {
-    if (uploaded) await removeProductImage(uploaded.url);
-    showMessage($('editNotice'), (error.message || 'This product could not be saved.') + ' Your changes are still in the form. Please try again.', 'error');
+    const cleanupError = !saveSucceeded ? await cleanupUploadedAssets(uploadedAssets) : '';
+    showMessage($('editNotice'), (error.message || 'This product could not be saved.')
+      + (cleanupError ? ' Uploaded media cleanup also failed: ' + cleanupError + '.' : '')
+      + ' Your changes are still in the form. Please try again.', 'error');
   } finally {
     editSaving = false;
     setBusy($('editSave'), false);
@@ -842,6 +1011,21 @@ $('editImage').addEventListener('change', () => {
     return;
   }
   updateEditPreview();
+});
+$('editGalleryImages').addEventListener('change', () => {
+  const valid = [...$('editGalleryImages').files].every(validProductImage);
+  $('editGalleryImages').setCustomValidity(valid ? '' : 'Choose JPEG, PNG, or WebP photos up to 3 MB each.');
+  if (!valid) $('editGalleryImages').reportValidity();
+  updateEditGalleryPreview();
+});
+$('editProductVideo').addEventListener('change', () => {
+  const file = $('editProductVideo').files[0];
+  $('editProductVideo').setCustomValidity(validProductVideo(file) ? '' : 'Choose an MP4 or WebM video up to 25 MB.');
+  if (!validProductVideo(file)) $('editProductVideo').reportValidity();
+  updateEditVideoPreview();
+});
+$('removeProductVideo').addEventListener('change', () => {
+  $('editVideoPreview').classList.toggle('is-removed', $('removeProductVideo').checked);
 });
 $('editKeepImage').addEventListener('click', () => {
   $('editImage').value = '';
@@ -893,35 +1077,65 @@ $('productForm').addEventListener('submit', async event => {
   $('productName').setCustomValidity('');
   if (!$('productForm').reportValidity()) return;
   const file = $('productImage').files[0];
+  const galleryFiles = [...$('productGalleryImages').files];
+  const videoFile = $('productVideo').files[0];
+  $('productImage').setCustomValidity(validProductImage(file) ? '' : 'Choose a JPEG, PNG, or WebP cover photo up to 3 MB.');
+  $('productGalleryImages').setCustomValidity(galleryFiles.every(validProductImage) ? '' : 'Choose JPEG, PNG, or WebP photos up to 3 MB each.');
+  $('productVideo').setCustomValidity(validProductVideo(videoFile) ? '' : 'Choose an MP4 or WebM video up to 25 MB.');
+  if (!$('productForm').reportValidity()) return;
   const uploadedPosition = products.length + 1;
   const values = {name, description: $('productDescription').value.trim() || null,
     price: $('productPrice').value === '' ? null : Number($('productPrice').value),
     available_sizes: selectedProductSizes('product-sizes'),
-    image_url: currentImageUrl || null, is_visible: $('productVisible').checked, sort_order: uploadedPosition};
-  let uploaded = null;
+    image_url: currentImageUrl || null,
+    gallery_images: [],
+    video_url: null,
+    is_visible: $('productVisible').checked, sort_order: uploadedPosition};
+  const uploadedAssets = [];
   setBusy($('saveButton'), true, 'Saving…');
   $('addProduct').disabled = true;
   $('productImage').disabled = true;
+  $('productGalleryImages').disabled = true;
+  $('productVideo').disabled = true;
   try {
+    const totalUploads = (file ? 1 : 0) + galleryFiles.length + (videoFile ? 1 : 0);
+    let uploadNumber = 0;
     if (file) {
-      $('saveButton').textContent = 'Uploading image…';
-      uploaded = await uploadProductImage(file);
-      values.image_url = uploaded.url;
-      $('saveButton').textContent = 'Saving…';
+      $('saveButton').textContent = `Uploading media ${++uploadNumber} of ${totalUploads}…`;
+      const asset = await uploadProductImage(file);
+      uploadedAssets.push(asset);
+      values.image_url = asset.url;
     }
+    for (const galleryFile of galleryFiles) {
+      $('saveButton').textContent = `Uploading media ${++uploadNumber} of ${totalUploads}…`;
+      const asset = await uploadProductImage(galleryFile);
+      uploadedAssets.push(asset);
+      values.gallery_images.push(asset.url);
+    }
+    if (videoFile) {
+      $('saveButton').textContent = `Uploading media ${++uploadNumber} of ${totalUploads}…`;
+      const asset = await uploadProductVideo(videoFile);
+      uploadedAssets.push(asset);
+      values.video_url = asset.url;
+    }
+    $('saveButton').textContent = 'Saving…';
     const result = await db.from('products').insert(values);
     if (result.error) throw result.error;
-    uploaded = null;
+    uploadedAssets.length = 0;
     showMessage(notice, '“' + name + '” saved' + (values.is_visible ? ' and visible on the website.' : ' as a hidden product.'), 'success');
     resetProductForm();
     await loadProducts();
   } catch (error) {
-    if (uploaded) await removeProductImage(uploaded.url);
-    showMessage(notice, (error.message || 'This product could not be saved.') + ' Your changes are still in the form. Please try again.', 'error');
+    const cleanupError = await cleanupUploadedAssets(uploadedAssets);
+    showMessage(notice, (error.message || 'This product could not be saved.')
+      + (cleanupError ? ' Uploaded media cleanup also failed: ' + cleanupError + '.' : '')
+      + ' Your changes are still in the form. Please try again.', 'error');
   } finally {
     setBusy($('saveButton'), false);
     $('addProduct').disabled = false;
     $('productImage').disabled = false;
+    $('productGalleryImages').disabled = false;
+    $('productVideo').disabled = false;
   }
 });
 
@@ -929,7 +1143,6 @@ $('deleteDialog').addEventListener('close', async () => {
   const product = pendingDelete;
   pendingDelete = null;
   if ($('deleteDialog').returnValue !== 'delete' || !product) return;
-  let imageUrlToRemove = '';
   try {
     if (product.website_key) {
       const {data, error} = await db.from('products').upsert({
@@ -945,19 +1158,14 @@ $('deleteDialog').addEventListener('close', async () => {
       const {data, error} = await db.from('products').delete().eq('id', product.id).select('id');
       if (error) throw error;
       if (!data?.length) throw new Error('The product no longer exists or you do not have permission to delete it.');
-      imageUrlToRemove = product.image_url;
     }
     await loadProducts();
-    if (imageUrlToRemove) {
+    if (!product.website_key) {
       try {
-        const path = productImagePath(imageUrlToRemove);
-        if (path) {
-          const {error} = await db.storage.from('product_images').remove([path]);
-          if (error) throw error;
-        }
+        await removeProductAssets([product.image_url, ...(product.gallery_images || []), product.video_url]);
       } catch (error) {
         const detail = error && typeof error.message === 'string' ? error.message : String(error);
-        showMessage(notice, '“' + product.name + '” was removed from the collection, but its image could not be deleted from storage: ' + detail, 'error');
+        showMessage(notice, '“' + product.name + '” was deleted, but some media could not be deleted from storage: ' + detail, 'error');
         return;
       }
     }
@@ -987,6 +1195,18 @@ $('productImage').addEventListener('change', () => {
     return;
   }
   updatePreview();
+});
+$('productGalleryImages').addEventListener('change', () => {
+  const valid = [...$('productGalleryImages').files].every(validProductImage);
+  $('productGalleryImages').setCustomValidity(valid ? '' : 'Choose JPEG, PNG, or WebP photos up to 3 MB each.');
+  if (!valid) $('productGalleryImages').reportValidity();
+  updateNewGalleryPreview();
+});
+$('productVideo').addEventListener('change', () => {
+  const file = $('productVideo').files[0];
+  $('productVideo').setCustomValidity(validProductVideo(file) ? '' : 'Choose an MP4 or WebM video up to 25 MB.');
+  if (!validProductVideo(file)) $('productVideo').reportValidity();
+  updateNewVideoPreview();
 });
 $('productSearch').addEventListener('input', renderProducts);
 $('visibilityFilter').addEventListener('change', renderProducts);

@@ -917,6 +917,30 @@ p {
   object-fit: cover;
 }
 
+.product-detail-media-grid {
+  display: grid;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.product-detail-gallery-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  background: var(--color-sand);
+}
+
+.product-detail-video {
+  display: block;
+  grid-column: 1 / -1;
+  width: 100%;
+  max-height: 780px;
+  background: var(--color-ink);
+}
+
 .product-detail-copy {
   padding-top: var(--space-4);
 }

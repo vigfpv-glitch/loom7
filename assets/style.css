@@ -997,6 +997,10 @@ p {
   overflow: hidden;
 }
 
+.product-image::after {
+  display: none;
+}
+
 .product-image img {
   transition: transform var(--transition-slower);
   object-fit: cover;
@@ -1052,6 +1056,7 @@ p {
 }
 
 .quick-view {
+  display: none;
   position: absolute;
   top: var(--space-3);
   right: var(--space-3);

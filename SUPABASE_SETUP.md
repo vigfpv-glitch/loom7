@@ -57,6 +57,14 @@ Each uploaded image receives a unique filename to avoid stale browser/CDN caches
 
 Verify an empty-table fallback, first save, text-only updates, adding and removing multiple slideshow images, an invalid upload, a failed image URL, and sign-out/sign-in. Also verify that an anonymous visitor and a signed-in account not present in `admin_users` cannot modify `hero_content` or upload/delete objects in `hero_images`. The bucket is public: do not upload private or sensitive images. Existing broad Storage policies can grant additional access, so review any pre-existing policies that apply to all buckets.
 
+## Editable About Section
+
+To edit the homepage About section, run the entire `supabase/about.sql` script in the Supabase SQL Editor after `supabase/schema.sql`. The script creates the `about_content` table, the public `about_images` bucket, and row-level security policies for public reads and allowlisted-admin writes. It is safe to rerun and does not overwrite saved content.
+
+Sign in to `admin.html`, select **About Section**, edit the label, headline, paragraph, Instagram button text/link, image, and image alt text, then select **Save About Section**. Image uploads accept JPEG, PNG, or WebP up to 5 MB. Leave the image field empty to keep the current image. Reload the homepage to see saved changes. Until an About record is saved, the current static About content and image remain as the fallback.
+
+Only allowlisted admins can change About content or upload files. The image bucket is public so visitors can load the image; do not upload private or sensitive files. Replaced images are retained so cached pages are not broken; remove old files from **Storage → about_images** only after confirming their URLs are no longer used.
+
 ## Editing products
 
 Every product in the admin collection, including the built-in Roots 01–04 cards, now has an **Edit** button. It opens a dialog where you can change the product title, description, optional INR price, visibility (Visible/Hidden), and image. Leave the price empty to hide it on the website, or enter a non-negative amount with up to two decimal places. Leave the image field empty to keep the current image, or choose a JPEG, PNG, or WebP image up to 3 MB to replace it. **Save Changes** updates the product in Supabase and refreshes the collection list.

@@ -130,6 +130,11 @@
         <a class="collection-load-button" href="collection.html">
           <span>LOAD MORE</span>
           <svg viewBox="0 0 26 24" fill="none" aria-hidden="true"><path class="load-chevron load-chevron-first" d="m2 2 11 10L2 22" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter"/><path class="load-chevron load-chevron-second" d="m13 2 11 10-11 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+          <svg class="collection-load-orbit" viewBox="0 0 220 58" preserveAspectRatio="none" aria-hidden="true">
+            <defs><linearGradient id="load-more-orbit-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#54a8ff"/><stop offset="0.52" stop-color="#7587ff"/><stop offset="1" stop-color="#c273ff"/></linearGradient></defs>
+            <rect class="orbit-glow" x="1.5" y="1.5" width="217" height="55" rx="27.5"/>
+            <rect class="orbit-core" x="1.5" y="1.5" width="217" height="55" rx="27.5"/>
+          </svg>
         </a>
       </div>
       <div class="collection-footer">
@@ -170,13 +175,13 @@
 
 <section class="section story-section" id="story" aria-labelledby="story-title">
       <div class="story-content">
-        <div class="story-label">About</div>
+        <div class="story-label" id="story-label">About</div>
         <h1 id="story-title">WEAR YOUR OWN RHYTHM.</h1>
-        <p class="story-text">LOOM7 is about clothing that feels like you — not clothing that tells you who to be. Pieces designed for the way you move through every day.</p>
-        <a class="button button-secondary" href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Follow on Instagram</a>
+        <p class="story-text" id="story-text">LOOM7 is about clothing that feels like you — not clothing that tells you who to be. Pieces designed for the way you move through every day.</p>
+        <a class="button button-secondary" id="story-cta" href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Follow on Instagram</a>
       </div>
       <div class="story-image">
-        <img loading="lazy" decoding="async" src="assets/story-feature.webp" alt="Loom7 fashion collection photo" onerror="this.hidden=true;this.parentElement.classList.add('is-fallback')">
+        <img id="story-image" loading="lazy" decoding="async" src="assets/story-feature.webp" alt="Loom7 fashion collection photo">
       </div>
     </section>
 
@@ -242,6 +247,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="assets/supabase-config.js"></script>
   <script src="assets/hero.js"></script>
+  <script src="assets/about.js"></script>
   <script src="assets/collection.js"></script>
   <script src="assets/newsletter.js"></script>
   <script>

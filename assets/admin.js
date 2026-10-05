@@ -20,6 +20,11 @@ let heroPreviewObjectUrls = [];
 let heroLoaded = false;
 let heroSchemaReady = false;
 let heroLoadVersion = 0;
+let currentAboutImage = '';
+let aboutImagePreviewUrl = '';
+let aboutLoaded = false;
+let aboutSchemaReady = false;
+let aboutLoadVersion = 0;
 const priceFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2,
 });
@@ -64,6 +69,15 @@ function showAuth() {
   updateHeroPreview();
   $('heroNotice').classList.add('hidden');
   $('heroRetry').classList.add('hidden');
+  aboutLoadVersion += 1;
+  aboutLoaded = false;
+  aboutSchemaReady = false;
+  $('aboutFields').disabled = true;
+  $('aboutImage').value = '';
+  $('aboutRetry').classList.add('hidden');
+  $('aboutNotice').classList.add('hidden');
+  if (aboutImagePreviewUrl) URL.revokeObjectURL(aboutImagePreviewUrl);
+  aboutImagePreviewUrl = '';
   notice.classList.add('hidden');
   selectTab($('productsTab'));
 }
@@ -81,7 +95,68 @@ async function enterApp(user) {
   appView.classList.remove('hidden');
   $('signout').classList.remove('hidden');
   $('password').value = '';
-  await Promise.all([loadProducts(), loadSubscribers(), loadHeroContent()]);
+  await Promise.all([loadProducts(), loadSubscribers(), loadHeroContent(), loadAboutContent()]);
+}
+
+function updateAboutPreview(file = null) {
+  if (aboutImagePreviewUrl) URL.revokeObjectURL(aboutImagePreviewUrl);
+  aboutImagePreviewUrl = file ? URL.createObjectURL(file) : '';
+  const image = $('aboutPreviewImage');
+  image.src = aboutImagePreviewUrl || currentAboutImage || window.Loom7About.defaults.image_url;
+  image.hidden = false;
+  $('aboutPreviewStatus').textContent = file
+    ? `${file.name} selected; save to publish the new image.`
+    : 'Current website image. Choose a file above to replace it.';
+  image.onerror = () => {
+    image.hidden = true;
+    showMessage($('aboutNotice'), 'The About image preview could not be loaded. Choose a replacement before saving.', 'error');
+  };
+}
+
+async function loadAboutContent() {
+  const version = ++aboutLoadVersion;
+  aboutLoaded = false;
+  $('aboutFields').disabled = true;
+  $('aboutRetry').classList.add('hidden');
+  $('aboutForm').setAttribute('aria-busy', 'true');
+  showMessage($('aboutNotice'), 'Loading your About Section…');
+  try {
+    const {data, error} = await db.from('about_content')
+      .select('label, title, body, cta_text, cta_link, image_url, image_alt')
+      .eq('id', window.Loom7About.id).maybeSingle();
+    if (version !== aboutLoadVersion) return;
+    if (error) throw error;
+    const content = window.Loom7About.normalize(data || {});
+    $('aboutLabel').value = content.label;
+    $('aboutTitle').value = content.title;
+    $('aboutBody').value = content.body;
+    $('aboutButtonText').value = content.cta_text;
+    $('aboutButtonLink').value = content.cta_link;
+    $('aboutImageAlt').value = content.image_alt;
+    currentAboutImage = content.image_url;
+    $('aboutImage').value = '';
+    updateAboutPreview();
+    aboutLoaded = true;
+    aboutSchemaReady = true;
+    $('aboutFields').disabled = false;
+    $('aboutSave').disabled = false;
+    showMessage($('aboutNotice'), data
+      ? 'Your published About Section is ready to edit.'
+      : 'The website currently uses its default About Section. Save to publish your changes.');
+  } catch (error) {
+    if (version !== aboutLoadVersion) return;
+    const detail = error && typeof error.message === 'string' ? error.message : String(error);
+    showMessage($('aboutNotice'), 'Could not load the About Section: ' + detail
+      + '. Run supabase/about.sql in your Supabase SQL Editor, then try again.', 'error');
+    $('aboutRetry').classList.remove('hidden');
+  } finally {
+    if (version === aboutLoadVersion) $('aboutForm').setAttribute('aria-busy', 'false');
+  }
+}
+
+function validAboutImage(file) {
+  return !file || (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+    && file.size > 0 && file.size <= 5 * 1024 * 1024);
 }
 
 function updateHeroPreview() {
@@ -263,6 +338,97 @@ $('heroForm').addEventListener('submit', async event => {
 });
 
 $('heroRetry').addEventListener('click', loadHeroContent);
+$('aboutForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!db || !aboutLoaded) return;
+  if (!aboutSchemaReady) {
+    showMessage($('aboutNotice'), 'Run supabase/about.sql in your Supabase SQL Editor before saving About Section changes.', 'error');
+    return;
+  }
+  const label = $('aboutLabel').value.trim();
+  const title = $('aboutTitle').value.trim();
+  const buttonText = $('aboutButtonText').value.trim();
+  const buttonLink = window.Loom7About.safeUrl($('aboutButtonLink').value.trim());
+  $('aboutLabel').setCustomValidity(label ? '' : 'Enter a section label.');
+  $('aboutTitle').setCustomValidity(title ? '' : 'Enter a headline.');
+  $('aboutButtonText').setCustomValidity(buttonText ? '' : 'Enter button text.');
+  $('aboutButtonLink').setCustomValidity(buttonLink ? '' : 'Enter a complete HTTP or HTTPS URL without credentials.');
+  const selectedFile = $('aboutImage').files[0] || null;
+  $('aboutImage').setCustomValidity(validAboutImage(selectedFile) ? '' : 'Choose a JPEG, PNG, or WebP image up to 5 MB.');
+  if (!$('aboutForm').reportValidity()) return;
+
+  const values = {
+    id: window.Loom7About.id,
+    label,
+    title,
+    body: $('aboutBody').value.trim(),
+    cta_text: buttonText,
+    cta_link: buttonLink,
+    image_url: currentAboutImage,
+    image_alt: $('aboutImageAlt').value.trim(),
+  };
+  const version = aboutLoadVersion;
+  let uploadedPath = '';
+  let imageUploaded = false;
+  setBusy($('aboutSave'), true, 'Saving…');
+  $('aboutFields').disabled = true;
+  $('aboutForm').setAttribute('aria-busy', 'true');
+  try {
+    if (selectedFile) {
+      $('aboutSave').textContent = 'Uploading image…';
+      const extension = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}[selectedFile.type];
+      uploadedPath = 'about/' + crypto.randomUUID() + '.' + extension;
+      const {error} = await db.storage.from('about_images').upload(uploadedPath, selectedFile, {
+        contentType: selectedFile.type, upsert: false,
+      });
+      if (error) throw error;
+      imageUploaded = true;
+      const {data} = db.storage.from('about_images').getPublicUrl(uploadedPath);
+      values.image_url = data.publicUrl;
+    }
+    if (version !== aboutLoadVersion) throw new Error('Your session changed. Sign in again before saving.');
+    $('aboutSave').textContent = 'Publishing…';
+    const {error} = await db.from('about_content').upsert(values, {onConflict: 'id'});
+    if (error) throw error;
+    uploadedPath = '';
+    imageUploaded = false;
+    if (version !== aboutLoadVersion) return;
+    currentAboutImage = values.image_url;
+    $('aboutImage').value = '';
+    updateAboutPreview();
+    showMessage($('aboutNotice'), 'About Section saved. Reload the website to see your published changes.', 'success');
+  } catch (error) {
+    if (uploadedPath && imageUploaded) {
+      try {
+        const {error: cleanupError} = await db.storage.from('about_images').remove([uploadedPath]);
+        if (cleanupError) console.warn('Could not remove unpublished About image upload.', cleanupError);
+      } catch (cleanupError) {
+        console.warn('Could not remove unpublished About image upload.', cleanupError);
+      }
+    }
+    if (version === aboutLoadVersion) {
+      const detail = error && typeof error.message === 'string' ? error.message : String(error);
+      showMessage($('aboutNotice'), 'Could not save the About Section: ' + detail + '. Your changes remain in the form.', 'error');
+    }
+  } finally {
+    setBusy($('aboutSave'), false);
+    if (version === aboutLoadVersion) {
+      $('aboutFields').disabled = !aboutLoaded;
+      $('aboutForm').setAttribute('aria-busy', 'false');
+    }
+  }
+});
+
+$('aboutRetry').addEventListener('click', loadAboutContent);
+$('aboutImage').addEventListener('change', () => {
+  const file = $('aboutImage').files[0] || null;
+  $('aboutImage').setCustomValidity(validAboutImage(file) ? '' : 'Choose a JPEG, PNG, or WebP image up to 5 MB.');
+  if (!validAboutImage(file)) {
+    $('aboutImage').reportValidity();
+    return;
+  }
+  updateAboutPreview(file);
+});
 $('heroUpload').addEventListener('change', () => {
   const selected = Array.from($('heroUpload').files);
   if (selected.some(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
@@ -623,7 +789,7 @@ function selectTab(tab) {
     button.setAttribute('aria-selected', String(button === tab));
     button.tabIndex = button === tab ? 0 : -1;
   });
-  ['products', 'subscribers', 'hero'].forEach(section => {
+  ['products', 'subscribers', 'hero', 'about'].forEach(section => {
     $(section + 'Panel').classList.toggle('hidden', tab.dataset.tab !== section);
   });
 }

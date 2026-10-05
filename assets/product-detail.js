@@ -197,7 +197,7 @@
       });
       const productQuery = client.from('products')
         .select('id, name, description, price, image_url, website_key, available_sizes, gallery_images, video_url')
-        .eq('is_visible', true);
+        .eq('is_visible', true).is('deleted_at', null).eq('permanently_deleted', false);
       const [result, hidden] = await Promise.all([
         (key ? productQuery.eq('website_key', key) : productQuery.eq('id', id)).maybeSingle(),
         key ? client.rpc('hidden_website_product_keys') : Promise.resolve({data: [], error: null}),

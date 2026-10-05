@@ -7,8 +7,10 @@ const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, character =
 let db = null;
 let products = [];
 let productLoadVersion = 0;
+let productsView = 'collection';
 let subscribers = [];
 let pendingDelete = null;
+let pendingDeleteAction = 'trash';
 let currentImageUrl = '';
 let previewObjectUrl = '';
 let editingProduct = null;
@@ -64,6 +66,9 @@ function showAuth() {
   appView.classList.add('hidden');
   $('signout').classList.add('hidden');
   products = [];
+  productsView = 'collection';
+  $('productSearch').value = '';
+  $('visibilityFilter').value = 'all';
   productLoadVersion += 1;
   subscribers = [];
   $('productsList').replaceChildren();
@@ -517,8 +522,9 @@ function mergeProducts(savedProducts, websiteProducts) {
         ...websiteProduct,
         sort_order: ['roots-01', 'roots-02', 'roots-03', 'roots-04'].indexOf(websiteProduct.website_key) + 1,
       };
-    });
-  const uploaded = savedProducts.filter(product => !product.website_key).sort((a, b) =>
+    })
+    .filter(product => !product.permanently_deleted);
+  const uploaded = savedProducts.filter(product => !product.website_key && !product.permanently_deleted).sort((a, b) =>
     Number(a.sort_order || 0) - Number(b.sort_order || 0)
     || String(a.created_at || '').localeCompare(String(b.created_at || ''))
     || String(a.id).localeCompare(String(b.id)));
@@ -550,8 +556,10 @@ async function loadProducts() {
     if (version !== productLoadVersion) return;
     if (saved.status === 'rejected' && website.status === 'rejected') throw new Error('Collection unavailable.');
     products = mergeProducts(saved.status === 'fulfilled' ? saved.value : [], website.status === 'fulfilled' ? website.value : []);
-    $('totalProducts').textContent = products.length;
-    $('visibleProducts').textContent = products.filter(product => product.is_visible).length;
+    const activeProducts = products.filter(product => !product.deleted_at && !product.permanently_deleted);
+    $('totalProducts').textContent = activeProducts.length;
+    $('visibleProducts').textContent = activeProducts.filter(product => product.is_visible).length;
+    $('trashCount').textContent = products.filter(product => product.deleted_at && !product.permanently_deleted).length;
     renderProducts();
     if (saved.status === 'rejected' || website.status === 'rejected') {
       showMessage($('collectionNotice'), saved.status === 'rejected'
@@ -566,6 +574,17 @@ async function loadProducts() {
 }
 
 $('collectionRetry').addEventListener('click', loadProducts);
+$('collectionView').addEventListener('click', () => {
+  productsView = 'collection';
+  $('productSearch').value = '';
+  $('visibilityFilter').value = 'all';
+  renderProducts();
+});
+$('trashView').addEventListener('click', () => {
+  productsView = 'trash';
+  $('productSearch').value = '';
+  renderProducts();
+});
 
 function safeImage(value) {
   if (!value) return '';
@@ -581,18 +600,35 @@ function renderProducts() {
   const box = $('productsList');
   const search = $('productSearch').value.trim().toLowerCase();
   const visibility = $('visibilityFilter').value;
-  const filtered = products.filter(product => (product.name + ' ' + (product.description || '') + ' ' + (product.price ?? '')).toLowerCase().includes(search) && (visibility === 'all' || Boolean(product.is_visible) === (visibility === 'visible')));
+  const inTrash = productsView === 'trash';
+  const viewProducts = products.filter(product => Boolean(product.deleted_at) === inTrash && !product.permanently_deleted);
+  const filtered = viewProducts.filter(product => (product.name + ' ' + (product.description || '') + ' ' + (product.price ?? '')).toLowerCase().includes(search)
+    && (inTrash || visibility === 'all' || Boolean(product.is_visible) === (visibility === 'visible')));
   box.setAttribute('aria-busy', 'false');
-  $('productCount').textContent = filtered.length + (filtered.length !== products.length ? ' / ' + products.length : '');
+  $('collectionHeading').firstChild.textContent = inTrash ? 'Trash ' : 'Collection ';
+  $('collectionView').classList.toggle('active', !inTrash);
+  $('trashView').classList.toggle('active', inTrash);
+  $('collectionView').setAttribute('aria-selected', String(!inTrash));
+  $('trashView').setAttribute('aria-selected', String(inTrash));
+  $('addProduct').classList.toggle('hidden', inTrash);
+  $('visibilityFilterWrap').classList.toggle('hidden', inTrash);
+  $('productSearch').placeholder = inTrash ? 'Search trash…' : 'Search your collection…';
+  $('productCount').textContent = filtered.length + (filtered.length !== viewProducts.length ? ' / ' + viewProducts.length : '');
   if (!filtered.length) {
-    box.innerHTML = '<div class="empty"><strong>' + (products.length ? 'No matching pieces.' : 'Your collection starts here.') + '</strong><p>' + (products.length ? 'Try another search or change the visibility filter.' : 'Add your first product using the collection details form.') + '</p></div>';
+    const emptyTitle = inTrash
+      ? (viewProducts.length ? 'No matching deleted products.' : 'Trash is empty.')
+      : (viewProducts.length ? 'No matching pieces.' : 'Your collection starts here.');
+    const emptyMessage = inTrash
+      ? (viewProducts.length ? 'Try a different search.' : 'Products you move to Trash will appear here.')
+      : (viewProducts.length ? 'Try another search or change the visibility filter.' : 'Add your first product using the collection details form.');
+    box.innerHTML = '<div class="empty"><strong>' + emptyTitle + '</strong><p>' + emptyMessage + '</p></div>';
     return;
   }
-  const orderedProducts = [...products].sort((a, b) =>
+  const orderedProducts = products.filter(product => !product.deleted_at && !product.permanently_deleted).sort((a, b) =>
     Number(a.sort_order || 0) - Number(b.sort_order || 0)
     || String(a.created_at || '').localeCompare(String(b.created_at || ''))
     || String(a.id).localeCompare(String(b.id)));
-  box.innerHTML = '<table><caption class="sr-only">Products in your collection</caption><thead><tr><th scope="col">Image</th><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Position</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>' + filtered.map(product => {
+  box.innerHTML = '<table><caption class="sr-only">' + (inTrash ? 'Products in Trash' : 'Products in your collection') + '</caption><thead><tr><th scope="col">Image</th><th scope="col">Product</th><th scope="col">Price</th>' + (inTrash ? '' : '<th scope="col">Position</th>') + '<th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>' + filtered.map(product => {
     const image = safeImage(product.image_url);
     const name = escapeHtml(product.name);
     const id = escapeHtml(product.id);
@@ -600,11 +636,17 @@ function renderProducts() {
       ? null : Number(product.price);
     const priceText = Number.isFinite(price) && price >= 0 ? escapeHtml(priceFormatter.format(price)) : '—';
     const position = orderedProducts.findIndex(item => item.id === product.id) + 1;
-    const actions = '<button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button>'
-      + '<button type="button" class="btn" data-move="' + id + '" data-position="' + (position - 1) + '" aria-label="Move ' + name + ' up"' + (position <= 1 ? ' disabled' : '') + '>↑</button>'
-      + '<button type="button" class="btn" data-move="' + id + '" data-position="' + (position + 1) + '" aria-label="Move ' + name + ' down"' + (position >= orderedProducts.length ? ' disabled' : '') + '>↓</button>'
-      + '<button type="button" class="btn danger" data-delete="' + id + '" aria-label="Delete ' + name + '">Delete</button>';
-    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td>' + priceText + '</td><td>' + (position || '—') + '</td><td><span class="status' + (product.is_visible ? '' : ' unpublished') + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</span></td><td><div class="row-actions">' + actions + '</div></td></tr>';
+    const actions = inTrash
+      ? '<button type="button" class="btn" data-restore="' + id + '" aria-label="Restore ' + name + '">Restore</button>'
+        + '<button type="button" class="btn danger" data-permanent-delete="' + id + '" aria-label="Permanently delete ' + name + '">Delete permanently</button>'
+      : '<button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button>'
+        + '<button type="button" class="btn" data-move="' + id + '" data-position="' + (position - 1) + '" aria-label="Move ' + name + ' up"' + (position <= 1 ? ' disabled' : '') + '>↑</button>'
+        + '<button type="button" class="btn" data-move="' + id + '" data-position="' + (position + 1) + '" aria-label="Move ' + name + ' down"' + (position >= orderedProducts.length ? ' disabled' : '') + '>↓</button>'
+        + '<button type="button" class="btn danger" data-delete="' + id + '" aria-label="Move ' + name + ' to Trash">Move to Trash</button>';
+    const status = inTrash
+      ? '<span class="status unpublished">In Trash</span>'
+      : '<button type="button" class="status-toggle' + (product.is_visible ? ' is-visible' : ' is-hidden') + '" role="switch" aria-checked="' + String(Boolean(product.is_visible)) + '" data-status-toggle="' + id + '" aria-label="' + (product.is_visible ? 'Visible' : 'Hidden') + ': ' + name + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</button>';
+    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td>' + priceText + '</td>' + (inTrash ? '' : '<td>' + (position || '—') + '</td>') + '<td>' + status + '</td><td><div class="row-actions">' + actions + '</div></td></tr>';
   }).join('') + '</tbody></table>';
   box.querySelectorAll('img').forEach(image => image.addEventListener('error', () => {
     const placeholder = document.createElement('span');
@@ -616,14 +658,33 @@ function renderProducts() {
   box.querySelectorAll('[data-edit]').forEach(button => button.addEventListener('click', () => openEditDialog(products.find(product => String(product.id) === button.dataset.edit))));
   box.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', () => {
     pendingDelete = products.find(product => String(product.id) === button.dataset.delete);
+    pendingDeleteAction = 'trash';
     $('deleteName').textContent = pendingDelete.name;
-    $('deleteDescription').textContent = pendingDelete.website_key
-      ? 'This built-in website product will be hidden from visitors. You can restore it later by editing it and setting it to Visible.'
-      : 'This product will be permanently deleted from the collection. This cannot be undone.';
-    $('deleteDialog').querySelector('[value="delete"]').textContent = pendingDelete.website_key
-      ? 'Remove from website' : 'Delete product';
+    $('deleteHeading').textContent = 'Move this piece to Trash?';
+    $('deleteDescription').textContent = 'The product and its media will be kept in Trash. You can restore it or permanently delete it later.';
+    $('deleteDialog').querySelector('[value="delete"]').textContent = 'Move to Trash';
+    $('deleteDialog').querySelector('[value="cancel"]').textContent = 'Cancel';
     $('deleteDialog').returnValue = '';
     $('deleteDialog').showModal();
+  }));
+  box.querySelectorAll('[data-permanent-delete]').forEach(button => button.addEventListener('click', () => {
+    pendingDelete = products.find(product => String(product.id) === button.dataset.permanentDelete);
+    pendingDeleteAction = 'permanent-delete';
+    $('deleteName').textContent = pendingDelete.name;
+    $('deleteHeading').textContent = 'Permanently delete this piece?';
+    $('deleteDescription').textContent = 'This cannot be undone. The product and its stored media will be permanently deleted.';
+    $('deleteDialog').querySelector('[value="delete"]').textContent = 'Delete permanently';
+    $('deleteDialog').querySelector('[value="cancel"]').textContent = 'Keep in Trash';
+    $('deleteDialog').returnValue = '';
+    $('deleteDialog').showModal();
+  }));
+  box.querySelectorAll('[data-restore]').forEach(button => button.addEventListener('click', () => {
+    const product = products.find(item => String(item.id) === button.dataset.restore);
+    if (product) restoreProduct(product);
+  }));
+  box.querySelectorAll('[data-status-toggle]').forEach(button => button.addEventListener('click', () => {
+    const product = products.find(item => String(item.id) === button.dataset.statusToggle);
+    if (product) updateProductVisibility(product, !product.is_visible);
   }));
   box.querySelectorAll('[data-move]').forEach(button => button.addEventListener('click', () => {
     const product = products.find(item => String(item.id) === button.dataset.move);
@@ -894,7 +955,6 @@ function openEditDialog(product) {
   $('editGalleryImages').value = '';
   $('editProductVideo').value = '';
   $('removeProductVideo').checked = false;
-  $('editVisibility').value = product.is_visible ? 'visible' : 'hidden';
   $('editHeading').textContent = 'Edit “' + product.name + '”';
   $('editNotice').classList.add('hidden');
   updateEditDescriptionCount();
@@ -942,7 +1002,7 @@ $('editForm').addEventListener('submit', async event => {
     image_url: product.image_url || null,
     gallery_images: editGalleryUrls.filter(url => !editRemovedGalleryUrls.has(url)),
     video_url: $('removeProductVideo').checked ? null : editVideoUrl || null,
-    is_visible: $('editVisibility').value === 'visible'};
+    is_visible: Boolean(product.is_visible)};
   const uploadedAssets = [];
   const removedAssets = [
     ...(file && product.image_url ? [product.image_url] : []),
@@ -1139,43 +1199,112 @@ $('productForm').addEventListener('submit', async event => {
   }
 });
 
-$('deleteDialog').addEventListener('close', async () => {
-  const product = pendingDelete;
-  pendingDelete = null;
-  if ($('deleteDialog').returnValue !== 'delete' || !product) return;
+async function updateProductVisibility(product, isVisible) {
+ if (!db) return;
+ const button = $('productsList').querySelector(`[data-status-toggle="${CSS.escape(String(product.id))}"]`);
+ if (button) button.disabled = true;
   try {
-    if (product.website_key) {
-      const {data, error} = await db.from('products').upsert({
-        website_key: product.website_key,
-        name: product.name,
-        description: product.description || null,
-        image_url: product.image_url || null,
-        is_visible: false,
-      }, {onConflict: 'website_key'}).select('id');
-      if (error) throw error;
-      if (!data?.length) throw new Error('The product could not be hidden. Check that you are signed in as an authorized admin.');
-    } else {
-      const {data, error} = await db.from('products').delete().eq('id', product.id).select('id');
-      if (error) throw error;
-      if (!data?.length) throw new Error('The product no longer exists or you do not have permission to delete it.');
-    }
-    await loadProducts();
-    if (!product.website_key) {
-      try {
-        await removeProductAssets([product.image_url, ...(product.gallery_images || []), product.video_url]);
-      } catch (error) {
-        const detail = error && typeof error.message === 'string' ? error.message : String(error);
-        showMessage(notice, '“' + product.name + '” was deleted, but some media could not be deleted from storage: ' + detail, 'error');
-        return;
-      }
-    }
-    showMessage(notice, product.website_key
-      ? '“' + product.name + '” is hidden from the website. Edit it and set it to Visible to restore it.'
-      : '“' + product.name + '” deleted from the collection and website.', 'success');
-  } catch (error) {
-    const detail = error && typeof error.message === 'string' ? error.message : String(error);
-    showMessage(notice, 'Could not delete “' + product.name + '”: ' + detail, 'error');
-  }
+   const values = {is_visible: isVisible};
+   const result = product.is_website_product && String(product.id).startsWith('website-')
+     ? await db.from('products').upsert({
+       website_key: product.website_key,
+       name: product.name,
+       description: product.description || null,
+       price: product.price ?? null,
+       image_url: product.image_url || null,
+       gallery_images: product.gallery_images || [],
+       video_url: product.video_url || null,
+       available_sizes: product.available_sizes || [...productSizes],
+       is_visible: isVisible,
+       deleted_at: null,
+       permanently_deleted: false,
+       sort_order: product.sort_order || 0,
+     }, {onConflict: 'website_key'}).select('id')
+     : await db.from('products').update(values).eq('id', product.id).select('id');
+   if (result.error) throw result.error;
+   if (!result.data?.length) throw new Error('The product no longer exists or you do not have permission to update it.');
+   await loadProducts();
+   showMessage(notice, '“' + product.name + '” is now ' + (isVisible ? 'visible' : 'hidden') + ' on the website.', 'success');
+ } catch (error) {
+   showMessage(notice, 'Could not change “' + product.name + '” status: ' + (error.message || String(error)), 'error');
+   renderProducts();
+ }
+}
+
+async function restoreProduct(product) {
+ if (!db) return;
+ try {
+   const activeCount = products.filter(item => !item.deleted_at && !item.permanently_deleted).length;
+   const {data, error} = await db.from('products').update({
+     deleted_at: null,
+     permanently_deleted: false,
+     sort_order: activeCount + 1,
+   }).eq('id', product.id).select('id');
+   if (error) throw error;
+   if (!data?.length) throw new Error('The product could not be restored. Check your admin access.');
+   productsView = 'collection';
+   await loadProducts();
+   showMessage(notice, '“' + product.name + '” restored to the collection.', 'success');
+ } catch (error) {
+   showMessage(notice, 'Could not restore “' + product.name + '”: ' + (error.message || String(error)), 'error');
+ }
+}
+
+$('deleteDialog').addEventListener('close', async () => {
+ const product = pendingDelete;
+ const action = pendingDeleteAction;
+ pendingDelete = null;
+ pendingDeleteAction = 'trash';
+ if ($('deleteDialog').returnValue !== 'delete' || !product) return;
+ try {
+   if (action === 'trash') {
+     const result = product.is_website_product && String(product.id).startsWith('website-')
+       ? await db.from('products').upsert({
+         website_key: product.website_key,
+         name: product.name,
+         description: product.description || null,
+         price: product.price ?? null,
+         image_url: product.image_url || null,
+         gallery_images: product.gallery_images || [],
+         video_url: product.video_url || null,
+         available_sizes: product.available_sizes || [...productSizes],
+         is_visible: Boolean(product.is_visible),
+         deleted_at: new Date().toISOString(),
+         permanently_deleted: false,
+         sort_order: product.sort_order || 0,
+       }, {onConflict: 'website_key'}).select('id')
+       : await db.from('products').update({deleted_at: new Date().toISOString()}).eq('id', product.id).select('id');
+     if (result.error) throw result.error;
+     if (!result.data?.length) throw new Error('The product could not be moved to Trash. Check your admin access.');
+     productsView = 'trash';
+     await loadProducts();
+     showMessage(notice, '“' + product.name + '” moved to Trash. Its media is kept so it can be restored.', 'success');
+     return;
+   }
+
+   let result;
+   if (product.website_key) {
+     result = await db.from('products').update({
+       permanently_deleted: true,
+       deleted_at: null,
+       is_visible: false,
+     }).eq('id', product.id).select('id');
+   } else {
+     result = await db.from('products').delete().eq('id', product.id).select('id');
+   }
+   if (result.error) throw result.error;
+   if (!result.data?.length) throw new Error('The product could not be permanently deleted. Check your admin access.');
+   await loadProducts();
+   try {
+     await removeProductAssets([product.image_url, ...(product.gallery_images || []), product.video_url]);
+   } catch (error) {
+     showMessage(notice, '“' + product.name + '” was deleted, but some media could not be removed from storage: ' + (error.message || String(error)), 'error');
+     return;
+   }
+   showMessage(notice, '“' + product.name + '” was permanently deleted.', 'success');
+ } catch (error) {
+   showMessage(notice, 'Could not ' + (action === 'trash' ? 'move “' + product.name + '” to Trash' : 'permanently delete “' + product.name + '”') + ': ' + (error.message || String(error)), 'error');
+ }
 });
 
 $('togglePassword').addEventListener('click', () => {

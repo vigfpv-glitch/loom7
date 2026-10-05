@@ -139,7 +139,8 @@
       });
       let [visible, hidden] = await Promise.all([
         client.from('products').select('id, name, description, price, image_url, website_key, sort_order, created_at')
-          .eq('is_visible', true).order('sort_order', {ascending: true}).order('created_at', {ascending: true}),
+          .eq('is_visible', true).is('deleted_at', null).eq('permanently_deleted', false)
+          .order('sort_order', {ascending: true}).order('created_at', {ascending: true}),
         client.rpc('hidden_website_product_keys'),
       ]);
       if (visible.error && visible.error.code === '42703'

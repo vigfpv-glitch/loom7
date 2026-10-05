@@ -10,6 +10,8 @@ alter table public.products add column if not exists sort_order integer not null
 alter table public.products add column if not exists available_sizes text[] not null default array['S', 'M', 'L', 'XL']::text[];
 alter table public.products add column if not exists gallery_images text[] not null default array[]::text[];
 alter table public.products add column if not exists video_url text;
+alter table public.products add column if not exists deleted_at timestamptz;
+alter table public.products add column if not exists permanently_deleted boolean not null default false;
 alter table public.products drop constraint if exists products_price_nonnegative;
 alter table public.products add constraint products_price_nonnegative
   check (price is null or price >= 0);
@@ -54,7 +56,8 @@ create trigger products_touch_updated_at before update on public.products
 -- exposing any other details of hidden products.
 create or replace function public.hidden_website_product_keys()
 returns setof text language sql stable security definer set search_path = '' as $$
-  select website_key from public.products where website_key is not null and not is_visible;
+  select website_key from public.products
+  where website_key is not null and (not is_visible or deleted_at is not null or permanently_deleted);
 $$;
 revoke all on function public.hidden_website_product_keys() from public;
 grant execute on function public.hidden_website_product_keys() to anon, authenticated;
@@ -71,16 +74,19 @@ begin
 
   perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('public.products.collection_order'));
 
-  select sort_order into current_position
-  from public.products
-  where id = p_product_id
-  for update;
+  select active.position into current_position
+  from (
+    select id, row_number() over (order by sort_order, created_at, id)::integer as position
+    from public.products
+    where deleted_at is null and not permanently_deleted
+  ) as active
+  where active.id = p_product_id;
   if not found then
-    raise exception 'The product no longer exists.';
+    raise exception 'The active product no longer exists.';
   end if;
 
-  select count(*)::integer into product_count
-  from public.products;
+  select count(*)::integer into product_count from public.products
+  where deleted_at is null and not permanently_deleted;
   if p_new_position < 1 or p_new_position > product_count then
     raise exception 'Choose a position between 1 and %.', product_count;
   end if;
@@ -88,23 +94,30 @@ begin
     return;
   end if;
 
-  update public.products
-  set sort_order = case
-    when id = p_product_id then p_new_position
-    when current_position < p_new_position
-      and sort_order > current_position and sort_order <= p_new_position then sort_order - 1
-    when current_position > p_new_position
-      and sort_order >= p_new_position and sort_order < current_position then sort_order + 1
-    else sort_order
-  end
-  where id = p_product_id
-    or (current_position < p_new_position and sort_order > current_position and sort_order <= p_new_position)
-    or (current_position > p_new_position and sort_order >= p_new_position and sort_order < current_position);
+  with active_products as (
+    select id, row_number() over (order by sort_order, created_at, id)::integer as position
+    from public.products
+    where deleted_at is null and not permanently_deleted
+  ),
+  repositioned as (
+    select id, case
+      when id = p_product_id then p_new_position
+      when current_position < p_new_position and position > current_position and position <= p_new_position then position - 1
+      when current_position > p_new_position and position >= p_new_position and position < current_position then position + 1
+      else position
+    end as position
+    from active_products
+  )
+  update public.products as product
+  set sort_order = repositioned.position
+  from repositioned
+  where product.id = repositioned.id;
 
   with ranked_builtins as (
     select website_key, row_number() over (order by sort_order, created_at, id)::integer as position
     from public.products
     where website_key in ('roots-01', 'roots-02', 'roots-03', 'roots-04')
+      and deleted_at is null and not permanently_deleted
   )
   update public.collection_product_order as saved_order
   set position = ranked_builtins.position
@@ -189,13 +202,17 @@ begin
 
   if p_website_key is null
     or p_website_key not in ('roots-01', 'roots-02', 'roots-03', 'roots-04')
-    or p_new_position < 1 or p_new_position > 4 then
-    raise exception 'Choose one of the four Roots products and a position from 1 to 4.';
+    or p_new_position < 1 or p_new_position > (
+      select count(*) from public.products
+      where website_key in ('roots-01', 'roots-02', 'roots-03', 'roots-04')
+        and deleted_at is null and not permanently_deleted
+    ) then
+    raise exception 'Choose an active Roots product and a valid position.';
   end if;
 
   select id into target_product_id
   from public.products
-  where website_key = p_website_key;
+  where website_key = p_website_key and deleted_at is null and not permanently_deleted;
   if not found then
     raise exception 'The built-in product does not exist.';
   end if;
@@ -203,7 +220,8 @@ begin
   select sort_order into target_collection_position
   from public.collection_product_order as saved_order
   join public.products as target on target.website_key = saved_order.product_key
-  where saved_order.position = p_new_position;
+  where saved_order.position = p_new_position
+    and target.deleted_at is null and not target.permanently_deleted;
   if not found then
     raise exception 'The built-in product order is not initialized. Run supabase/products.sql again.';
   end if;
@@ -218,9 +236,15 @@ create or replace function public.compact_product_order_after_delete()
 returns trigger language plpgsql set search_path = '' as $$
 begin
   perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('public.products.collection_order'));
-  update public.products
-  set sort_order = sort_order - 1
-  where sort_order > old.sort_order;
+  with ranked_active as (
+    select id, row_number() over (order by sort_order, created_at, id)::integer as position
+    from public.products
+    where deleted_at is null and not permanently_deleted
+  )
+  update public.products as product
+  set sort_order = ranked_active.position
+  from ranked_active
+  where product.id = ranked_active.id;
   return old;
 end;
 $$;

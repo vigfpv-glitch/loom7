@@ -17,6 +17,8 @@ create table if not exists public.products (
   gallery_images text[] not null default array[]::text[],
   video_url text check (video_url is null or char_length(video_url) <= 1000),
   is_visible boolean not null default true,
+  deleted_at timestamptz,
+  permanently_deleted boolean not null default false,
   available_sizes text[] not null default array['S', 'M', 'L', 'XL']::text[]
     check (available_sizes <@ array['S', 'M', 'L', 'XL']::text[]),
   created_at timestamptz not null default now(),

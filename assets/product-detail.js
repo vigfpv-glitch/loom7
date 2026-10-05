@@ -41,6 +41,33 @@
     status.classList.toggle('is-error', isError);
   }
 
+  async function copyMessageToClipboard(message) {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(message);
+        return true;
+      } catch (error) {
+        console.warn('Clipboard API unavailable; trying the browser copy fallback.', error);
+      }
+    }
+
+    const textArea = document.createElement('textarea');
+    textArea.value = message;
+    textArea.setAttribute('readonly', '');
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.append(textArea);
+    let copied = false;
+    try {
+      textArea.select();
+      copied = document.execCommand('copy');
+    } finally {
+      textArea.remove();
+    }
+    if (!copied) throw new Error('The browser did not allow the enquiry message to be copied.');
+    return true;
+  }
+
   function renderProduct(product) {
     title.textContent = product.name;
     document.title = `${product.name} | Loom7`;
@@ -87,15 +114,28 @@
   }
 
   sizeOptions.forEach(option => {
-    option.addEventListener('change', () => {
+    option.addEventListener('change', async () => {
       messageButton.disabled = !sizeOptions.some(size => size.checked && !size.disabled);
       enquiryStatus.hidden = true;
       enquiryStatus.textContent = '';
       enquiryStatus.classList.remove('is-error');
+
+      const selectedSize = sizeOptions.find(size => size.checked && !size.disabled);
+      if (!selectedSize) return;
+      const message = `Hi Loom7! I’m interested in the ${title.textContent} in size ${selectedSize.value}. Please let me know the ordering details.`;
+      try {
+        await copyMessageToClipboard(message);
+        enquiryStatus.textContent = 'Your enquiry message has been copied. Please paste it into the Instagram chat to send your enquiry.';
+      } catch (error) {
+        console.error('Unable to copy the Instagram enquiry message.', error);
+        enquiryStatus.textContent = `Could not copy the enquiry message. Please copy this message manually: ${message}`;
+        enquiryStatus.classList.add('is-error');
+      }
+      enquiryStatus.hidden = false;
     });
   });
 
-  messageButton.addEventListener('click', async () => {
+  messageButton.addEventListener('click', () => {
     const selectedSize = sizeOptions.find(option => option.checked && !option.disabled);
     if (!selectedSize) {
       enquiryStatus.textContent = 'Please select a size before enquiring.';
@@ -105,18 +145,7 @@
       return;
     }
 
-    const message = `Hi Loom7, I would like to enquire about purchasing ${title.textContent} in size ${selectedSize.value}.`;
     window.open('https://ig.me/m/loom7.co', '_blank', 'noopener,noreferrer');
-    try {
-      await navigator.clipboard.writeText(message);
-      enquiryStatus.textContent = 'Your enquiry message was copied. Paste it into the Instagram chat to send.';
-      enquiryStatus.classList.remove('is-error');
-    } catch (error) {
-      console.error('Unable to copy the Instagram enquiry message.', error);
-      enquiryStatus.textContent = `Instagram opened. Send this message: ${message}`;
-      enquiryStatus.classList.add('is-error');
-    }
-    enquiryStatus.hidden = false;
   });
 
   async function loadProduct() {

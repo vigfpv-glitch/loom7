@@ -581,7 +581,46 @@ p {
 }
 
 .collection-cta {
-  min-height: 44px;
+  min-height: 68px;
+}
+
+.collection-footer .guide-trigger,
+.collection-footer .collection-cta {
+  min-height: 68px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--color-ink);
+  border-radius: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-widest-2xl);
+  line-height: var(--leading-normal);
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background var(--transition-base),
+              border-color var(--transition-base),
+              color var(--transition-base),
+              transform var(--transition-base);
+}
+
+.collection-footer .guide-trigger {
+  min-width: 201px;
+  background: transparent;
+  color: var(--color-ink);
+}
+
+.collection-footer .collection-cta {
+  min-width: 286px;
+  background: var(--color-ink);
+  color: var(--color-white);
+}
+
+.collection-footer .guide-trigger:hover,
+.collection-footer .collection-cta:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-white);
+  transform: translateY(-2px);
 }
 
 .collection-status,

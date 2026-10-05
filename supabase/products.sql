@@ -67,15 +67,14 @@ begin
 
   select sort_order into current_position
   from public.products
-  where id = p_product_id and website_key is null
+  where id = p_product_id
   for update;
   if not found then
-    raise exception 'The uploaded product no longer exists.';
+    raise exception 'The product no longer exists.';
   end if;
 
   select count(*)::integer into product_count
-  from public.products
-  where website_key is null;
+  from public.products;
   if p_new_position < 1 or p_new_position > product_count then
     raise exception 'Choose a position between 1 and %.', product_count;
   end if;
@@ -92,10 +91,19 @@ begin
       and sort_order >= p_new_position and sort_order < current_position then sort_order + 1
     else sort_order
   end
-  where website_key is null
-    and (id = p_product_id
-      or (current_position < p_new_position and sort_order > current_position and sort_order <= p_new_position)
-      or (current_position > p_new_position and sort_order >= p_new_position and sort_order < current_position));
+  where id = p_product_id
+    or (current_position < p_new_position and sort_order > current_position and sort_order <= p_new_position)
+    or (current_position > p_new_position and sort_order >= p_new_position and sort_order < current_position);
+
+  with ranked_builtins as (
+    select website_key, row_number() over (order by sort_order, created_at, id)::integer as position
+    from public.products
+    where website_key in ('roots-01', 'roots-02', 'roots-03', 'roots-04')
+  )
+  update public.collection_product_order as saved_order
+  set position = ranked_builtins.position
+  from ranked_builtins
+  where saved_order.product_key = ranked_builtins.website_key;
 end;
 $$;
 revoke all on function public.reorder_product(uuid, integer) from public;
@@ -110,6 +118,51 @@ insert into public.collection_product_order (product_key, position)
 values ('roots-01', 1), ('roots-02', 2), ('roots-03', 3), ('roots-04', 4)
 on conflict (product_key) do nothing;
 
+do $$
+declare
+  builtin_count integer;
+begin
+  select count(*)::integer into builtin_count
+  from public.products
+  where website_key in ('roots-01', 'roots-02', 'roots-03', 'roots-04');
+
+  if builtin_count < 4 or exists (
+    select 1 from public.products
+    where website_key in ('roots-01', 'roots-02', 'roots-03', 'roots-04')
+      and sort_order = 0
+  ) then
+    insert into public.products (website_key, name, description, image_url, is_visible, sort_order)
+    select builtins.product_key, builtins.product_name, 'A statement piece from The Roots.',
+      builtins.image_url, true, ordered.position
+    from (values
+      ('roots-01', 'Roots 01', 'assets/roots-01.webp'),
+      ('roots-02', 'Roots 02', 'assets/roots-02.webp'),
+      ('roots-03', 'Roots 03', 'assets/roots-03.webp'),
+      ('roots-04', 'Roots 04', 'assets/roots-04.webp')
+    ) as builtins(product_key, product_name, image_url)
+    join public.collection_product_order as ordered using (product_key)
+    on conflict (website_key) do nothing;
+
+    update public.products as builtin
+    set sort_order = saved_order.position
+    from public.collection_product_order as saved_order
+    where builtin.website_key = saved_order.product_key;
+
+    with ranked_uploads as (
+      select id, row_number() over (
+        order by sort_order, created_at, id
+      )::integer + 4 as position
+      from public.products
+      where website_key is null
+    )
+    update public.products as uploaded
+    set sort_order = ranked_uploads.position
+    from ranked_uploads
+    where uploaded.id = ranked_uploads.id;
+  end if;
+end;
+$$;
+
 alter table public.collection_product_order enable row level security;
 revoke all on public.collection_product_order from anon, authenticated;
 grant select on public.collection_product_order to anon, authenticated;
@@ -121,7 +174,8 @@ create policy "Anyone can read built-in product order" on public.collection_prod
 create or replace function public.reorder_builtin_product(p_website_key text, p_new_position integer)
 returns void language plpgsql security definer set search_path = '' as $$
 declare
-  current_position integer;
+  target_product_id uuid;
+  target_collection_position integer;
 begin
   if not (select public.is_loom7_admin()) then
     raise exception 'Only Loom7 admins can reorder products.';
@@ -133,35 +187,40 @@ begin
     raise exception 'Choose one of the four Roots products and a position from 1 to 4.';
   end if;
 
-  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('public.collection_product_order'));
+  select id into target_product_id
+  from public.products
+  where website_key = p_website_key;
+  if not found then
+    raise exception 'The built-in product does not exist.';
+  end if;
 
-  select position into current_position
-  from public.collection_product_order
-  where product_key = p_website_key
-  for update;
+  select sort_order into target_collection_position
+  from public.collection_product_order as saved_order
+  join public.products as target on target.website_key = saved_order.product_key
+  where saved_order.position = p_new_position;
   if not found then
     raise exception 'The built-in product order is not initialized. Run supabase/products.sql again.';
   end if;
-  if current_position = p_new_position then
-    return;
-  end if;
 
-  update public.collection_product_order
-  set position = case
-    when product_key = p_website_key then p_new_position
-    when current_position < p_new_position
-      and position > current_position and position <= p_new_position then position - 1
-    when current_position > p_new_position
-      and position >= p_new_position and position < current_position then position + 1
-    else position
-  end
-  where product_key = p_website_key
-    or (current_position < p_new_position and position > current_position and position <= p_new_position)
-    or (current_position > p_new_position and position >= p_new_position and position < current_position);
+  perform public.reorder_product(target_product_id, target_collection_position);
 end;
 $$;
 revoke all on function public.reorder_builtin_product(text, integer) from public;
 grant execute on function public.reorder_builtin_product(text, integer) to authenticated;
+
+create or replace function public.compact_product_order_after_delete()
+returns trigger language plpgsql set search_path = '' as $$
+begin
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext('public.products.collection_order'));
+  update public.products
+  set sort_order = sort_order - 1
+  where sort_order > old.sort_order;
+  return old;
+end;
+$$;
+drop trigger if exists products_compact_order_after_delete on public.products;
+create trigger products_compact_order_after_delete after delete on public.products
+  for each row execute function public.compact_product_order_after_delete();
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('product_images', 'product_images', true, 3145728, array['image/jpeg', 'image/png', 'image/webp'])

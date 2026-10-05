@@ -137,11 +137,10 @@
       const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
       });
-      let [visible, hidden, positions] = await Promise.all([
+      let [visible, hidden] = await Promise.all([
         client.from('products').select('id, name, description, price, image_url, website_key, sort_order, created_at')
           .eq('is_visible', true).order('sort_order', {ascending: true}).order('created_at', {ascending: true}),
         client.rpc('hidden_website_product_keys'),
-        client.from('collection_product_order').select('product_key, position'),
       ]);
       if (visible.error && visible.error.code === '42703'
         && typeof visible.error.message === 'string' && visible.error.message.includes('sort_order')) {
@@ -154,15 +153,6 @@
       if (visible.error) throw visible.error;
       if (hidden.error) throw hidden.error;
       const hiddenKeys = new Set((hidden.data || []).map(row => typeof row === 'string' ? row : Object.values(row)[0]));
-      const builtinOrder = positions.error
-        ? ['roots-01', 'roots-02', 'roots-03', 'roots-04']
-        : (positions.data || [])
-          .slice()
-          .sort((a, b) => Number(a.position) - Number(b.position))
-          .map(item => item.product_key);
-      if (positions.error) {
-        console.warn('Could not load the saved order for built-in products. Run the updated supabase/products.sql script to enable it.');
-      }
       const existingByKey = new Map(
         [...grid.querySelectorAll('.product[data-product-key]')]
         .map(card => [card.dataset.productKey, card]),
@@ -173,23 +163,45 @@
       (visible.data || []).forEach(product => {
         if (!product.name || (product.website_key && hiddenKeys.has(product.website_key))) return;
         const existing = product.website_key && existingByKey.get(product.website_key);
-        if (existing) applyProduct(existing, product);
+        if (existing) {
+          existing.dataset.productId = product.id;
+          applyProduct(existing, product);
+        }
         else {
           const card = makeProductCard(product);
           grid.append(card);
           if (product.website_key) existingByKey.set(product.website_key, card);
         }
       });
+      const cardsById = new Map(
+        [...grid.querySelectorAll('.product[data-product-id]')]
+          .map(card => [card.dataset.productId, card]),
+      );
       const cardsByKey = new Map(
         [...grid.querySelectorAll('.product[data-product-key]')]
           .map(card => [card.dataset.productKey, card]),
       );
-      const orderedBuiltinCards = builtinOrder.map(key => cardsByKey.get(key)).filter(Boolean);
-      const orderedKeys = new Set(builtinOrder);
+      let orderedCards = (visible.data || [])
+        .map(product => cardsById.get(product.id) || (product.website_key && cardsByKey.get(product.website_key)))
+        .filter(Boolean);
+      const builtinKeys = ['roots-01', 'roots-02', 'roots-03', 'roots-04'];
+      const allBuiltinsSeeded = builtinKeys.every(key => (visible.data || []).some(product => product.website_key === key)
+        || hiddenKeys.has(key));
+      if (!allBuiltinsSeeded) {
+        orderedCards = [
+          ...builtinKeys.map(key => cardsByKey.get(key)).filter(Boolean),
+          ...(visible.data || [])
+            .filter(product => !product.website_key)
+            .map(product => cardsById.get(product.id))
+            .filter(Boolean),
+        ];
+      }
+      const includedCards = new Set(orderedCards);
       const remainingBuiltinCards = [...grid.querySelectorAll('.product[data-product-key]')]
-        .filter(card => !orderedKeys.has(card.dataset.productKey));
-      const uploadedCards = [...grid.querySelectorAll('.product:not([data-product-key])')];
-      grid.replaceChildren(...orderedBuiltinCards, ...remainingBuiltinCards, ...uploadedCards);
+        .filter(card => !includedCards.has(card));
+      const remainingUploadedCards = [...grid.querySelectorAll('.product:not([data-product-key])')]
+        .filter(card => !includedCards.has(card));
+      grid.replaceChildren(...orderedCards, ...remainingBuiltinCards, ...remainingUploadedCards);
       if (status) status.hidden = true;
       setupProductVisibility();
     } catch (error) {

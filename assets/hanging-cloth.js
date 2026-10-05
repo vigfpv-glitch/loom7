@@ -5,6 +5,7 @@
   [
     {className: 'hanging-cloth hanging-cloth--dress', src: 'assets/fly3-hanging.png'},
     {className: 'hanging-cloth hanging-cloth--shirt', src: 'assets/fly1-hanging.png'},
+    {className: 'hanging-cloth hanging-cloth--firefly', src: 'assets/firefly-hanging.png'},
   ].forEach(({className, src}) => {
     const cloth = document.createElement('img');
     cloth.className = className;

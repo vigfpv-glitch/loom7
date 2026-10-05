@@ -1731,13 +1731,29 @@ p {
   }
 
   .grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-8);
-    max-width: var(--container-narrow);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
   }
 
   .product-image {
-    height: var(--height-product-image-mobile);
+    height: auto;
+    aspect-ratio: 3 / 4;
+  }
+
+  .product-copy {
+    padding: var(--space-4) 0 var(--space-3);
+  }
+
+  .product-copy h3 {
+    font-size: var(--text-xl);
+  }
+
+  .product-copy p {
+    font-size: var(--text-sm);
+  }
+
+  .product-link {
+    font-size: 10px;
   }
 
   .collection-header {

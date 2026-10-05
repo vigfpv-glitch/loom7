@@ -14,9 +14,11 @@ let previewObjectUrl = '';
 let editingProduct = null;
 let editSaving = false;
 let editPreviewObjectUrl = '';
-let currentHeroImage = window.Loom7Hero.defaults.image_url;
-let heroPreviewObjectUrl = '';
+let currentHeroImages = [...window.Loom7Hero.defaults.image_urls];
+let heroNewImages = [];
+let heroPreviewObjectUrls = [];
 let heroLoaded = false;
+let heroSchemaReady = false;
 let heroLoadVersion = 0;
 const priceFormatter = new Intl.NumberFormat('en-IN', {
   style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2,
@@ -54,9 +56,11 @@ function showAuth() {
   closeEditDialog(true);
   heroLoadVersion += 1;
   heroLoaded = false;
+  heroSchemaReady = false;
   $('heroFields').disabled = true;
   $('heroUpload').value = '';
-  currentHeroImage = window.Loom7Hero.defaults.image_url;
+  currentHeroImages = [...window.Loom7Hero.defaults.image_urls];
+  heroNewImages = [];
   updateHeroPreview();
   $('heroNotice').classList.add('hidden');
   $('heroRetry').classList.add('hidden');
@@ -81,12 +85,40 @@ async function enterApp(user) {
 }
 
 function updateHeroPreview() {
-  if (heroPreviewObjectUrl) URL.revokeObjectURL(heroPreviewObjectUrl);
-  heroPreviewObjectUrl = '';
-  const file = $('heroUpload').files[0];
-  if (file) heroPreviewObjectUrl = URL.createObjectURL(file);
-  $('heroPreviewImage').src = heroPreviewObjectUrl || currentHeroImage;
-  $('heroPreviewStatus').textContent = file ? 'Selected image — save to publish' : 'Current website image';
+  heroPreviewObjectUrls.forEach(url => URL.revokeObjectURL(url));
+  heroPreviewObjectUrls = [];
+  const slides = [
+    ...currentHeroImages.map((src, index) => ({src, label: `Slide ${index + 1}`})),
+    ...heroNewImages.map((file, index) => {
+      const src = URL.createObjectURL(file);
+      heroPreviewObjectUrls.push(src);
+      return {src, label: `New image ${index + 1}`};
+    }),
+  ];
+  const gallery = $('heroSlides');
+  gallery.replaceChildren();
+  slides.forEach((slide, index) => {
+    const item = document.createElement('div');
+    item.className = 'hero-slide';
+    const preview = document.createElement('img');
+    preview.src = slide.src;
+    preview.alt = `${slide.label} preview`;
+    preview.addEventListener('error', () => {
+      preview.hidden = true;
+      showMessage($('heroNotice'), `${slide.label} could not be loaded. Remove it or replace it before saving.`, 'error');
+    });
+    const remove = document.createElement('button');
+    remove.className = 'btn';
+    remove.type = 'button';
+    remove.dataset.heroRemove = String(index);
+    remove.textContent = 'Remove';
+    remove.setAttribute('aria-label', `Remove ${slide.label.toLowerCase()}`);
+    item.append(preview, remove);
+    gallery.append(item);
+  });
+  $('heroPreviewStatus').textContent = slides.length
+    ? `${slides.length} slideshow image${slides.length === 1 ? '' : 's'}; save to publish changes.`
+    : 'Add at least one image to the slideshow.';
 }
 
 async function loadHeroContent() {
@@ -97,25 +129,54 @@ async function loadHeroContent() {
   $('heroForm').setAttribute('aria-busy', 'true');
   showMessage($('heroNotice'), 'Loading your Hero Section…');
   try {
-    const {data, error} = await db.from('hero_content').select('title, subtitle, cta_text, cta_link, image_url')
+    let {data, error} = await db.from('hero_content').select('title, subtitle, cta_text, cta_link, image_url, image_urls')
       .eq('id', window.Loom7Hero.id).maybeSingle();
     if (version !== heroLoadVersion) return;
+    if (error && error.code === '42703' && error.message.includes('image_urls')) {
+      const legacy = await db.from('hero_content').select('title, subtitle, cta_text, cta_link, image_url')
+        .eq('id', window.Loom7Hero.id).maybeSingle();
+      data = legacy.data;
+      error = legacy.error;
+      if (!error) {
+        const content = window.Loom7Hero.normalize(data || {});
+        $('heroTitle').value = content.title;
+        $('heroSubtitle').value = content.subtitle;
+        $('heroButtonText').value = content.cta_text;
+        $('heroButtonLink').value = content.cta_link;
+        currentHeroImages = content.image_urls;
+        heroNewImages = [];
+        $('heroUpload').value = '';
+        updateHeroPreview();
+        heroLoaded = true;
+        heroSchemaReady = false;
+        $('heroFields').disabled = false;
+        $('heroSave').disabled = true;
+        showMessage($('heroNotice'), 'Your current hero content is shown, but slideshow editing is unavailable until you run the updated supabase/hero.sql in your Supabase SQL Editor.', 'error');
+        return;
+      }
+    }
     if (error) throw error;
     const content = window.Loom7Hero.normalize(data || {});
     $('heroTitle').value = content.title;
     $('heroSubtitle').value = content.subtitle;
     $('heroButtonText').value = content.cta_text;
     $('heroButtonLink').value = content.cta_link;
-    currentHeroImage = content.image_url;
+    currentHeroImages = content.image_urls;
+    heroNewImages = [];
     $('heroUpload').value = '';
     updateHeroPreview();
     heroLoaded = true;
+    heroSchemaReady = true;
     $('heroFields').disabled = false;
-    showMessage($('heroNotice'), data ? 'Your published Hero Section is ready to edit.' : 'The website currently uses its default Hero Section. Save to publish your changes.');
+    $('heroSave').disabled = false;
+    showMessage($('heroNotice'), data
+      ? 'Your published Hero Section is ready to edit.'
+      : 'The website currently uses its default Hero Section. Save to publish your changes.');
   } catch (error) {
     if (version !== heroLoadVersion) return;
     const detail = error && typeof error.message === 'string' ? error.message : String(error);
-    showMessage($('heroNotice'), 'Could not load the Hero Section: ' + detail + '. If the hero_content table is missing, run supabase/hero.sql in your Supabase SQL Editor, then try again.', 'error');
+    showMessage($('heroNotice'), 'Could not load the Hero Section: ' + detail
+      + '. Run the updated supabase/hero.sql in your Supabase SQL Editor to enable slideshow images, then try again.', 'error');
     $('heroRetry').classList.remove('hidden');
   } finally {
     if (version === heroLoadVersion) $('heroForm').setAttribute('aria-busy', 'false');
@@ -123,16 +184,19 @@ async function loadHeroContent() {
 }
 
 function validateHeroImage() {
-  const file = $('heroUpload').files[0];
-  const valid = !file || (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+  const valid = heroNewImages.every(file => ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
     && file.size > 0 && file.size <= 5 * 1024 * 1024);
-  $('heroUpload').setCustomValidity(valid ? '' : 'Choose a JPEG, PNG, or WebP image up to 5 MB.');
+  $('heroUpload').setCustomValidity(valid ? '' : 'Choose JPEG, PNG, or WebP images up to 5 MB each.');
   return valid;
 }
 
 $('heroForm').addEventListener('submit', async event => {
   event.preventDefault();
   if (!db || !heroLoaded) return;
+  if (!heroSchemaReady) {
+    showMessage($('heroNotice'), 'Run the updated supabase/hero.sql in your Supabase SQL Editor before saving hero slideshow changes.', 'error');
+    return;
+  }
   const title = $('heroTitle').value.trim();
   const buttonText = $('heroButtonText').value.trim();
   const buttonLink = window.Loom7Hero.safeUrl($('heroButtonLink').value.trim());
@@ -141,42 +205,48 @@ $('heroForm').addEventListener('submit', async event => {
   $('heroButtonLink').setCustomValidity(buttonLink ? '' : 'Enter a complete HTTP or HTTPS URL without credentials.');
   validateHeroImage();
   if (!$('heroForm').reportValidity()) return;
-  const file = $('heroUpload').files[0];
+  if (!currentHeroImages.length && !heroNewImages.length) {
+    showMessage($('heroNotice'), 'Add at least one image to the hero slideshow before saving.', 'error');
+    return;
+  }
   const values = {id: window.Loom7Hero.id, title, subtitle: $('heroSubtitle').value.trim(),
-    cta_text: buttonText, cta_link: buttonLink, image_url: currentHeroImage};
+    cta_text: buttonText, cta_link: buttonLink, image_url: currentHeroImages[0] || '',
+    image_urls: [...currentHeroImages]};
   const version = heroLoadVersion;
-  let uploadedPath = '';
+  const uploadedPaths = [];
   setBusy($('heroSave'), true, 'Saving…');
   $('heroFields').disabled = true;
   $('heroForm').setAttribute('aria-busy', 'true');
   try {
-    if (file) {
-      $('heroSave').textContent = 'Uploading image…';
+    for (const [index, file] of heroNewImages.entries()) {
+      $('heroSave').textContent = `Uploading image ${index + 1} of ${heroNewImages.length}…`;
       const extension = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}[file.type];
       const path = 'hero/' + crypto.randomUUID() + '.' + extension;
       const {error} = await db.storage.from('hero_images').upload(path, file, {contentType: file.type, upsert: false});
       if (error) throw error;
-      uploadedPath = path;
+      uploadedPaths.push(path);
       const {data} = db.storage.from('hero_images').getPublicUrl(path);
-      values.image_url = data.publicUrl;
+      values.image_urls.push(data.publicUrl);
     }
+    values.image_url = values.image_urls[0];
     if (version !== heroLoadVersion) throw new Error('Your session changed. Sign in again before saving.');
     $('heroSave').textContent = 'Publishing…';
     const {error} = await db.from('hero_content').upsert(values, {onConflict: 'id'});
     if (error) throw error;
-    uploadedPath = '';
+    uploadedPaths.length = 0;
     if (version !== heroLoadVersion) return;
-    currentHeroImage = values.image_url;
+    currentHeroImages = values.image_urls;
+    heroNewImages = [];
     $('heroUpload').value = '';
     updateHeroPreview();
-    showMessage($('heroNotice'), 'Hero Section saved. Reload the website to see your changes.', 'success');
+    showMessage($('heroNotice'), 'Hero Section saved. Reload the website to see your published slideshow.', 'success');
   } catch (error) {
-    if (uploadedPath) {
+    if (uploadedPaths.length) {
       try {
-        const {error: cleanupError} = await db.storage.from('hero_images').remove([uploadedPath]);
-        if (cleanupError) console.warn('Could not remove the unpublished Hero image upload.', cleanupError);
+        const {error: cleanupError} = await db.storage.from('hero_images').remove(uploadedPaths);
+        if (cleanupError) console.warn('Could not remove unpublished Hero image uploads.', cleanupError);
       } catch (cleanupError) {
-        console.warn('Could not remove the unpublished Hero image upload.', cleanupError);
+        console.warn('Could not remove unpublished Hero image uploads.', cleanupError);
       }
     }
     if (version === heroLoadVersion) {
@@ -194,19 +264,30 @@ $('heroForm').addEventListener('submit', async event => {
 
 $('heroRetry').addEventListener('click', loadHeroContent);
 $('heroUpload').addEventListener('change', () => {
-  if (!validateHeroImage()) { $('heroUpload').reportValidity(); return; }
+  const selected = Array.from($('heroUpload').files);
+  if (selected.some(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
+    || file.size === 0 || file.size > 5 * 1024 * 1024)) {
+    $('heroUpload').setCustomValidity('Choose JPEG, PNG, or WebP images up to 5 MB each.');
+    $('heroUpload').reportValidity();
+    $('heroUpload').value = '';
+    return;
+  }
+  $('heroUpload').setCustomValidity('');
+  heroNewImages.push(...selected);
+  $('heroUpload').value = '';
+  updateHeroPreview();
+});
+ $('heroSlides').addEventListener('click', event => {
+  const button = event.target.closest('[data-hero-remove]');
+  if (!button) return;
+  const index = Number(button.dataset.heroRemove);
+  if (index < currentHeroImages.length) currentHeroImages.splice(index, 1);
+  else heroNewImages.splice(index - currentHeroImages.length, 1);
   updateHeroPreview();
 });
 ['heroTitle', 'heroButtonText', 'heroButtonLink'].forEach(id => {
   $(id).addEventListener('input', () => $(id).setCustomValidity(''));
 });
-$('heroPreviewImage').addEventListener('error', () => {
-  if ($('heroPreviewImage').getAttribute('src') !== window.Loom7Hero.defaults.image_url) {
-    $('heroPreviewImage').src = window.Loom7Hero.defaults.image_url;
-    $('heroPreviewStatus').textContent = 'Image unavailable — showing the default image';
-  }
-});
-
 function loading(box, label) {
   box.setAttribute('aria-busy', 'true');
   box.innerHTML = '<span class="loading-label">' + label + '</span><div aria-hidden="true"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div>';

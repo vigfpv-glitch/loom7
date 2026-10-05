@@ -8,8 +8,15 @@ create table if not exists public.hero_content (
   cta_text text not null check (char_length(btrim(cta_text)) between 1 and 120),
   cta_link text not null check (char_length(cta_link) <= 2000 and cta_link ~* '^https?://'),
   image_url text check (image_url is null or (char_length(image_url) <= 2000 and
-    (image_url ~* '^https?://' or image_url = 'assets/hero-static.webp')))
+    (image_url ~* '^https?://' or image_url ~* '^assets/[a-z0-9_-]+\.(jpg|jpeg|png|webp)$'))),
+  image_urls text[] not null default '{}'::text[]
 );
+
+alter table public.hero_content add column if not exists image_urls text[] not null default '{}'::text[];
+alter table public.hero_content drop constraint if exists hero_content_image_url_check;
+alter table public.hero_content add constraint hero_content_image_url_check
+  check (image_url is null or (char_length(image_url) <= 2000 and
+    (image_url ~* '^https?://' or image_url ~* '^assets/[a-z0-9_-]+\.(jpg|jpeg|png|webp)$')));
 
 alter table public.hero_content enable row level security;
 revoke all on public.hero_content from anon, authenticated;

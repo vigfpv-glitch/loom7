@@ -54,8 +54,10 @@ button,a,input,textarea,select{ -webkit-tap-highlight-color:transparent}
 .tab{white-space:nowrap}
 .hero-editor{max-width:760px}
 .hero-editor fieldset{border:0;padding:0;margin:0;min-width:0}
-.hero-preview{margin-bottom:24px;display:grid;gap:10px}
-.hero-preview img{width:100%;max-height:320px;object-fit:cover;background:#eeeee5}
+.hero-slides{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:8px 0}
+.hero-slide{position:relative;min-width:0}
+.hero-slide img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:#eeeee5}
+.hero-slide button{width:100%;margin-top:6px}
 .tab{background:none;border:0;border-bottom:2px solid transparent;padding:15px 0;margin-bottom:-1px;color:var(--muted);font-size:11px;letter-spacing:.05em;display:flex;gap:12px;align-items:center}
 .tab span{font-size:14px;letter-spacing:0}
 .tab[aria-selected=true]{background:none;color:var(--ink);border-color:var(--ink)}

@@ -392,6 +392,15 @@ p {
   object-fit: cover;
 }
 
+.hero-image img {
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+
+.hero-image img.is-active {
+  opacity: 1;
+}
+
 .hero-image::before {
   content: 'LOOM7';
   position: absolute;
@@ -1678,6 +1687,10 @@ p {
    ============================================ */
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-image img {
+    transition: none;
+  }
+
   html {
     scroll-behavior: auto;
   }

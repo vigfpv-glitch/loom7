@@ -38,8 +38,9 @@
             <div class="field"><label for="heroSubtitle">Subtitle</label><textarea id="heroSubtitle" maxlength="1000"></textarea></div>
             <div class="field"><label for="heroButtonText">Button Text <span class="required">Required</span></label><input id="heroButtonText" maxlength="120" required></div>
             <div class="field"><label for="heroButtonLink">Button Link <span class="required">Required</span></label><input id="heroButtonLink" type="url" maxlength="2000" required aria-describedby="heroLinkHint"><span id="heroLinkHint" class="field-hint">Use a complete HTTP or HTTPS URL.</span></div>
-            <div class="field"><label for="heroUpload">Hero image</label><input id="heroUpload" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="heroImageHint"><span id="heroImageHint" class="field-hint">JPEG, PNG, or WebP, up to 5 MB. Leave empty to keep the current image.</span></div>
-            <div class="hero-preview"><img id="heroPreviewImage" src="https://raw.githubusercontent.com/vigfpv-glitch/hero-img/main/pomelli_photoshoot_image_4k_0904.png" alt="Hero image preview"><span id="heroPreviewStatus" class="field-hint" role="status">Current website image</span></div>
+            <div class="field"><label for="heroUpload">Add hero images</label><input id="heroUpload" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="heroImageHint"><span id="heroImageHint" class="field-hint">Select one or more JPEG, PNG, or WebP images up to 5 MB each. The slideshow advances every 4.5 seconds; images play in the order shown.</span></div>
+            <div id="heroSlides" class="hero-slides" aria-label="Hero slideshow images"></div>
+            <span id="heroPreviewStatus" class="field-hint" role="status"></span>
             <button id="heroSave" class="btn primary" type="submit">Save Hero Section</button>
           </fieldset>
         </form>

@@ -1051,6 +1051,10 @@ p {
   margin: 0 auto;
 }
 
+html.collection-sync-pending #collection .grid {
+  visibility: hidden;
+}
+
 .product {
   position: relative;
   background: transparent;

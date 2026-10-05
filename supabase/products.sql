@@ -27,17 +27,18 @@ alter table public.products add constraint products_sort_order_nonnegative check
 
 with ranked_products as (
   select id, row_number() over (
-    order by case when sort_order > 0 then sort_order else 2147483647 end, created_at, id
-  )::integer as position
+    order by created_at, id
+  )::integer + coalesce((
+    select max(sort_order) from public.products where sort_order > 0
+  ), 0) as position
   from public.products
-  where website_key is null
+  where website_key is null and sort_order = 0
 )
 update public.products as product
 set sort_order = ranked_products.position
 from ranked_products
 where product.id = ranked_products.id;
 
-update public.products set sort_order = 0 where website_key is not null and sort_order <> 0;
 create index if not exists products_collection_order on public.products (sort_order, created_at)
   where website_key is null;
 

@@ -10,6 +10,7 @@
   const loadMoreButton = document.querySelector('[data-collection-load-more]');
   const status = document.querySelector('[data-collection-status]');
   if (!template) {
+    document.documentElement.classList.remove('collection-sync-pending');
     console.error('Unable to load collection products: no product card template was found.');
     if (status) {
       status.textContent = 'The collection could not be loaded. Please try again later.';
@@ -203,10 +204,12 @@
       const remainingUploadedCards = [...grid.querySelectorAll('.product:not([data-product-key])')]
         .filter(card => !includedCards.has(card));
       grid.replaceChildren(...orderedCards, ...remainingBuiltinCards, ...remainingUploadedCards);
+      document.documentElement.classList.remove('collection-sync-pending');
       if (status) status.hidden = true;
       setupProductVisibility();
     } catch (error) {
       console.error('Unable to load collection products.', error);
+      document.documentElement.classList.remove('collection-sync-pending');
       if (status) {
         status.textContent = 'The collection could not be loaded. Please try again later.';
         status.hidden = false;
@@ -219,6 +222,7 @@
     loadCollection();
   } else {
     console.error('Unable to load collection products: the Supabase client is unavailable.');
+    document.documentElement.classList.remove('collection-sync-pending');
     if (status) {
       status.textContent = 'The collection could not be loaded. Please try again later.';
       status.hidden = false;

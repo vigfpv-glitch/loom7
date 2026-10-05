@@ -538,6 +538,14 @@ function mergeProducts(savedProducts, websiteProducts) {
     : roots.concat(uploaded);
 }
 
+function nextProductPosition() {
+  return products.reduce((highest, product) => {
+    if (product.permanently_deleted) return highest;
+    const position = Number(product.sort_order);
+    return Number.isFinite(position) ? Math.max(highest, position) : highest;
+  }, 0) + 1;
+}
+
 async function loadProducts() {
   const version = ++productLoadVersion;
   const box = $('productsList');
@@ -1143,7 +1151,7 @@ $('productForm').addEventListener('submit', async event => {
   $('productGalleryImages').setCustomValidity(galleryFiles.every(validProductImage) ? '' : 'Choose JPEG, PNG, or WebP photos up to 3 MB each.');
   $('productVideo').setCustomValidity(validProductVideo(videoFile) ? '' : 'Choose an MP4 or WebM video up to 25 MB.');
   if (!$('productForm').reportValidity()) return;
-  const uploadedPosition = products.length + 1;
+  const uploadedPosition = nextProductPosition();
   const values = {name, description: $('productDescription').value.trim() || null,
     price: $('productPrice').value === '' ? null : Number($('productPrice').value),
     available_sizes: selectedProductSizes('product-sizes'),
@@ -1234,11 +1242,10 @@ async function updateProductVisibility(product, isVisible) {
 async function restoreProduct(product) {
  if (!db) return;
  try {
-   const activeCount = products.filter(item => !item.deleted_at && !item.permanently_deleted).length;
    const {data, error} = await db.from('products').update({
      deleted_at: null,
      permanently_deleted: false,
-     sort_order: activeCount + 1,
+     sort_order: nextProductPosition(),
    }).eq('id', product.id).select('id');
    if (error) throw error;
    if (!data?.length) throw new Error('The product could not be restored. Check your admin access.');

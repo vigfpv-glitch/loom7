@@ -465,6 +465,10 @@ p {
   z-index: 1;
 }
 
+.media.hero-image::after {
+  content: none;
+}
+
 .hero-image.is-fallback::before {
   opacity: 1;
 }

@@ -995,6 +995,19 @@ p {
   transition: transform var(--transition-slow);
 }
 
+.product[data-product-reveal] {
+  opacity: 0;
+  translate: 0 18px;
+  transition: opacity 650ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--product-reveal-delay, 0ms),
+              translate 650ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--product-reveal-delay, 0ms),
+              transform var(--transition-slow);
+}
+
+.product[data-product-reveal].is-revealed {
+  opacity: 1;
+  translate: 0 0;
+}
+
 .product:hover,
 .product:focus-within {
   transform: translateY(-8px);
@@ -1896,6 +1909,11 @@ p {
   .button,
   .product-image img {
     transition: none;
+  }
+
+  .product[data-product-reveal] {
+    opacity: 1;
+    translate: 0 0;
   }
 
   .product:hover,

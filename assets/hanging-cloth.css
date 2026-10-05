@@ -1,0 +1,54 @@
+.topbar,
+.top {
+  position: relative;
+}
+
+.hanging-cloth {
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  right: 12px;
+  width: clamp(72px, 8vw, 104px);
+  height: auto;
+  pointer-events: none;
+  transform-origin: 51% 7%;
+  animation: hanging-cloth-breeze 7s ease-in-out infinite;
+}
+
+.nav {
+  padding-right: max(6vw, 132px);
+}
+
+.top {
+  padding-right: max(5vw, 132px);
+}
+
+@keyframes hanging-cloth-breeze {
+  0%, 100% { transform: translateY(-6.7%) rotate(-1.5deg) skewX(-0.2deg) scaleX(1); }
+  28% { transform: translateY(-6.7%) rotate(1.2deg) skewX(0.3deg) scaleX(0.99); }
+  54% { transform: translateY(-6.7%) rotate(2.2deg) skewX(0.55deg) scaleX(0.98); }
+  78% { transform: translateY(-6.7%) rotate(-0.4deg) skewX(0.1deg) scaleX(1); }
+}
+
+@media (max-width: 760px) {
+  .nav {
+    padding-right: 84px;
+  }
+}
+
+@media (max-width: 600px) {
+  .top {
+    padding-right: 76px;
+  }
+
+  .hanging-cloth {
+    right: 6px;
+    width: 58px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hanging-cloth {
+    animation: none;
+  }
+}

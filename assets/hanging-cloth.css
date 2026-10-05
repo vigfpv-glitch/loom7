@@ -48,26 +48,28 @@
   }
 
   .navlinks {
-    flex: 0 0 100%;
-    gap: 0;
+    display: flex;
+    flex: 0 0 calc(100% + 5vw + 164px);
+    width: calc(100% + 5vw + 164px);
+    box-sizing: border-box;
+    justify-content: center;
+    gap: clamp(2px, 1vw, 8px);
+    margin: 42px -164px 0 -5vw;
+    padding: 8px 5vw;
+    background: var(--color-sand);
+    border-block: 1px solid var(--color-line);
+    font-size: clamp(8px, 2.5vw, 10px);
+    letter-spacing: 0.02em;
   }
 
   .navlinks a {
-    flex: 0 0 auto;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 7px 0;
+    border: 1px solid var(--color-line);
+    background: var(--color-paper);
+    text-align: center;
     white-space: nowrap;
-  }
-}
-
-@media (max-width: 500px) {
-  .navlinks {
-    display: flex;
-    flex: 0 0 calc(100% + 92px);
-    width: calc(100% + 92px);
-    justify-content: space-between;
-    margin-top: 42px;
-    margin-right: -92px;
-    font-size: 9px;
-    letter-spacing: 0.04em;
   }
 }
 

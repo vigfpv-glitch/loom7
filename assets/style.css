@@ -1687,7 +1687,12 @@ p {
     min-height: 0;
   }
 
+  .hero-image {
+    grid-row: 1;
+  }
+
   .hero-copy {
+    grid-row: 2;
     padding: 64px 8vw 52px;
   }
 

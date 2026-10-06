@@ -1346,21 +1346,29 @@ p {
 }
 
 .social .social-instagram-link {
+  padding: 0;
   min-width: 56px;
   min-height: 56px;
-  padding: var(--space-4);
+  border: 0;
+  background: transparent;
+  transition: transform var(--transition-base);
 }
 
 .social-instagram-link svg {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 56px;
+  height: 56px;
 }
 
-.social .button:hover {
+.social .button:not(.social-instagram-link):hover {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: var(--color-white);
+}
+
+.social .social-instagram-link:hover {
+  background: transparent;
+  transform: translateY(-2px);
 }
 
 /* ============================================

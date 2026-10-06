@@ -1224,6 +1224,7 @@ p {
 .step {
   padding: var(--space-8) var(--space-6);
   border-top: 1px solid var(--color-line);
+  text-align: center;
   transition: border-color var(--transition-base);
 }
 

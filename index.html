@@ -44,11 +44,10 @@
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <div class="topbar">New season · New essentials · Shop the Loom7 edit</div>
+  <div class="topbar">Timeless · Thoughtfully Made · Shop at Loom7</div>
   <header class="nav">
     <a class="logo" href="#home" aria-label="Loom7 home"><img src="LOOM7_logo_transparent.png" alt="LOOM7 — Timeless, Thoughtfully Made" width="859" height="598"></a>
     <nav class="navlinks" aria-label="Main navigation"><a href="#collection">Collection</a><a href="#story">About</a><a href="#how-to-order">How to order</a><a href="#instagram">Instagram</a><a href="#newsletter">Newsletter</a></nav>
-    <a class="nav-cta" href="https://www.instagram.com/loom7.co/" target="_blank" rel="noopener">Shop via Instagram</a>
   </header>
   <main id="main-content">
    <section class="hero" id="home" aria-labelledby="hero-title">
@@ -139,10 +138,6 @@
           </svg>
         </a>
       </div>
-      <div class="collection-footer">
-        <button class="guide-trigger" type="button" id="open-size-guide">Size &amp; fit guide</button>
-        <a class="collection-cta button button-secondary" href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Shop via Instagram</a>
-      </div>
     </section>
 
 <section class="section" id="how-to-order" aria-labelledby="order-title">
@@ -227,21 +222,6 @@
     </div>
   </dialog>
 
-<dialog class="size-dialog" id="size-dialog" aria-labelledby="size-guide-title">
-    <div class="dialog-copy">
-      <button class="dialog-close" type="button" data-close-dialog aria-label="Close size guide">×</button>
-      <div class="eyebrow">Fit support</div>
-      <h2 id="size-guide-title">Size &amp; fit guide</h2>
-      <p>We will help you choose the right fit personally through Instagram. Include these details in your message:</p>
-      <ul class="size-list">
-        <li><strong>Your usual size</strong><br>Tell us the size you normally wear.</li>
-        <li><strong>Your measurements</strong><br>Share your height or key measurements if you have them.</li>
-        <li><strong>Your preferred fit</strong><br>Let us know if you prefer a close, regular or relaxed fit.</li>
-      </ul>
-      <a class="button" href="https://ig.me/m/loom7.co" target="_blank" rel="noopener" style="margin-top:26px">Ask about my fit</a>
-    </div>
-  </dialog>
-
 <a class="mobile-sticky-cta" href="https://ig.me/m/loom7.co" target="_blank" rel="noopener">Message Loom7 on Instagram</a>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -310,15 +290,11 @@ document.querySelector('#collection .grid').addEventListener('click', (event) =>
       quickDialog.showModal();
     });
 
-const sizeDialog = document.getElementById('size-dialog');
-    document.getElementById('open-size-guide').addEventListener('click', () => sizeDialog.showModal());
     document.querySelectorAll('[data-close-dialog]').forEach((button) => {
       button.addEventListener('click', () => button.closest('dialog').close());
     });
-    [quickDialog, sizeDialog].forEach((dialog) => {
-      dialog.addEventListener('click', (event) => {
-        if (event.target === dialog) dialog.close();
-      });
+    quickDialog.addEventListener('click', (event) => {
+      if (event.target === quickDialog) quickDialog.close();
     });
   </script>
 </body>

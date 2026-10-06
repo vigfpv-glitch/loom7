@@ -339,11 +339,11 @@ p {
 }
 
 .hero h1 {
-  font-family: var(--font-display);
+  font-family: 'Josefin Slab', var(--font-display);
   font-size: var(--text-7xl);
   line-height: var(--leading-tight);
-  font-weight: 500;
-  letter-spacing: var(--tracking-tighter);
+  font-weight: 600;
+  letter-spacing: -0.04em;
   margin: var(--space-3) auto var(--space-6);
   max-width: 560px;
   text-align: center;

@@ -180,9 +180,6 @@
       const subtitle = document.getElementById('hero-subtitle');
       subtitle.textContent = content.subtitle;
       subtitle.hidden = !content.subtitle;
-      const button = document.getElementById('hero-cta');
-      button.textContent = content.cta_text;
-      button.href = content.cta_link;
       setSlides(content.image_urls);
     } catch (error) {
       console.warn('Could not load published Hero Section content.', error);

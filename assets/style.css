@@ -541,7 +541,7 @@ p {
 }
 
 #home + .collection-section {
-  background: #DDE6C8;
+  background: var(--color-paper);
 }
 
 .collection-header {

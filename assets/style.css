@@ -342,17 +342,21 @@ p {
   line-height: var(--leading-tight);
   font-weight: 500;
   letter-spacing: var(--tracking-tighter);
-  margin: var(--space-3) 0 var(--space-6);
+  margin: var(--space-3) auto var(--space-6);
   max-width: 560px;
+  text-align: center;
   color: var(--color-ink);
 }
 
 .hero-copy p {
   max-width: 410px;
+  margin-right: auto;
+  margin-left: auto;
   color: var(--color-muted);
   font-size: var(--text-xl);
   line-height: var(--leading-looser);
   margin-bottom: var(--space-10);
+  text-align: center;
 }
 
 .hero-note {

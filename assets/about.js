@@ -42,9 +42,8 @@
   const label = document.getElementById('story-label');
   const title = document.getElementById('story-title');
   const body = document.getElementById('story-text');
-  const button = document.getElementById('story-cta');
   const image = document.getElementById('story-image');
-  if (!label || !title || !body || !button || !image) return;
+  if (!label || !title || !body || !image) return;
 
   image.addEventListener('error', () => {
     if (image.getAttribute('src') !== defaults.image_url) {
@@ -73,8 +72,6 @@
       title.textContent = content.title;
       body.textContent = content.body;
       body.hidden = !content.body;
-      button.textContent = content.cta_text;
-      button.href = content.cta_link;
       image.alt = content.image_alt;
       image.hidden = false;
       image.parentElement.classList.remove('is-fallback');

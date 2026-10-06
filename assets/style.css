@@ -329,11 +329,13 @@ p {
 }
 
 .hero .eyebrow {
+  width: 100%;
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: var(--tracking-widest-4xl);
   text-transform: uppercase;
   color: var(--color-accent);
+  text-align: center;
 }
 
 .hero h1 {

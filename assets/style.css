@@ -540,6 +540,10 @@ p {
   background: var(--color-paper);
 }
 
+#home + .collection-section {
+  background: #ADAC93;
+}
+
 .collection-header {
   text-align: center;
   margin: 0 auto var(--space-16);

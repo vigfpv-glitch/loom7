@@ -1345,6 +1345,18 @@ p {
   border-color: var(--color-white);
 }
 
+.social .social-instagram-link {
+  min-width: 56px;
+  min-height: 56px;
+  padding: var(--space-4);
+}
+
+.social-instagram-link svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
 .social .button:hover {
   background: var(--color-accent);
   border-color: var(--color-accent);

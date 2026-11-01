@@ -53,23 +53,48 @@
     width: calc(100% + 5vw + 164px);
     box-sizing: border-box;
     justify-content: center;
-    gap: clamp(2px, 1vw, 8px);
-    margin: 42px -164px 0 -5vw;
-    padding: 8px 5vw;
-    background: var(--color-sand);
-    border-block: 1px solid var(--color-line);
+    gap: clamp(6px, 2vw, 12px);
+    margin: 12px -164px 0 -5vw;
+    padding: 4px 5vw 6px;
+    background: transparent;
     font-size: clamp(8px, 2.5vw, 10px);
     letter-spacing: 0.02em;
   }
 
   .navlinks a {
-    flex: 1 1 0;
+    display: inline-flex;
+    position: relative;
+    flex: 0 1 auto;
+    align-items: center;
+    justify-content: center;
     min-width: 0;
-    padding: 7px 0;
-    border: 1px solid var(--color-line);
-    background: var(--color-paper);
+    min-height: 40px;
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+    font-weight: 700;
     text-align: center;
     white-space: nowrap;
+  }
+
+  .navlinks a::after {
+    position: absolute;
+    right: 2px;
+    bottom: 4px;
+    left: 2px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--color-accent);
+    content: '';
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform var(--transition-base);
+  }
+
+  .navlinks a:hover::after,
+  .navlinks a:focus-visible::after,
+  .navlinks a[aria-current="page"]::after {
+    transform: scaleX(1);
   }
 }
 

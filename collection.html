@@ -7,11 +7,17 @@
   <meta name="robots" content="index,follow">
   <meta name="author" content="Loom7">
   <meta name="description" content="Explore the full Loom7 Roots collection. Browse timeless styles and order directly through Instagram DM.">
+  <link rel="canonical" href="https://loom7.pages.dev/collection">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Loom7">
+  <meta property="og:url" content="https://loom7.pages.dev/collection">
   <meta property="og:title" content="The Roots Collection | Loom7">
   <meta property="og:description" content="Explore the full Loom7 Roots collection and order directly through Instagram DM.">
-  <meta property="og:image" content="LOOM7_logo_transparent.png">
+  <meta property="og:image" content="https://loom7.pages.dev/LOOM7_logo_transparent.png">
+  <meta property="og:image:alt" content="Loom7 — The Roots clothing collection">
+  <meta name="twitter:title" content="The Roots Collection | Loom7">
+  <meta name="twitter:description" content="Explore Loom7's Roots clothing collection and order directly through Instagram DM.">
+  <meta name="twitter:image" content="https://loom7.pages.dev/LOOM7_logo_transparent.png">
   <meta name="twitter:card" content="summary_large_image">
   <title>The Roots Collection | Loom7</title>
   <link rel="icon" type="image/png" href="LOOM7_logo_transparent.png">
@@ -19,12 +25,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="assets/theme.js"></script>
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/hanging-cloth.css">
+  <link rel="stylesheet" href="assets/theme.css">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <div class="topbar">Timeless · Thoughtfully Made · Shop at Loom7</div>
+  <div class="topbar"><span>Timeless · Thoughtfully Made · Shop at Loom7</span><label class="theme-switch" title="Toggle day/night mode">
+    <input id="themeModeToggle" type="checkbox" role="switch" aria-label="Use dark mode" aria-checked="false">
+    <span class="slider" aria-hidden="true"></span>
+  </label></div>
   <header class="nav">
     <a class="logo" href="index.html#home" aria-label="Loom7 home"><img src="LOOM7_logo_transparent.png" alt="LOOM7 — Timeless, Thoughtfully Made" width="859" height="598"></a>
     <nav class="navlinks" aria-label="Main navigation">
@@ -88,6 +99,7 @@
   <script src="assets/collection.js"></script>
   <script src="assets/hanging-cloth.js"></script>
   <script src="assets/product-motion.js"></script>
+  <script src="assets/loom-ai.js"></script>
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
     document.addEventListener('click', (event) => {

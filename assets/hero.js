@@ -56,28 +56,35 @@
   const image = document.getElementById('hero-image');
   const slideshow = image && image.parentElement;
   const indicators = slideshow && slideshow.querySelector('.hero-indicators');
+  const previousButton = slideshow && slideshow.querySelector('[data-hero-previous]');
+  const nextButton = slideshow && slideshow.querySelector('[data-hero-next]');
   let slides = slideshow ? Array.from(slideshow.querySelectorAll('[data-hero-slide]')) : [];
-  if (!title || !image || !slideshow || !indicators) return;
+  if (!title || !image || !slideshow || !indicators || !previousButton || !nextButton) return;
 
   let activeSlideIndex = 0;
   let slideTimer = null;
+  let touchStart = null;
 
   function updateIndicators() {
     const buttons = Array.from(indicators.querySelectorAll('[data-hero-go-to]'));
+    let availableCount = 0;
     buttons.forEach((button, index) => {
       const unavailable = !slides[index] || slides[index].hidden || slides[index].classList.contains('is-unavailable');
       button.hidden = unavailable;
       button.setAttribute('aria-current', String(index === activeSlideIndex && !unavailable));
+      if (!unavailable) availableCount += 1;
     });
-    indicators.hidden = buttons.filter(button => !button.hidden).length < 2;
+    indicators.hidden = availableCount < 2;
+    previousButton.hidden = availableCount < 2;
+    nextButton.hidden = availableCount < 2;
   }
 
-  function showSlide(startIndex) {
+  function showSlide(startIndex, direction = 1) {
     const nextOffset = slides.findIndex((_, offset) => {
-      const index = (startIndex + offset) % slides.length;
+      const index = (startIndex + direction * offset + slides.length) % slides.length;
       return !slides[index].hidden && !slides[index].classList.contains('is-unavailable');
     });
-    const nextIndex = nextOffset < 0 ? -1 : (startIndex + nextOffset) % slides.length;
+    const nextIndex = nextOffset < 0 ? -1 : (startIndex + direction * nextOffset + slides.length) % slides.length;
     if (nextIndex < 0) {
       slideshow.classList.add('is-fallback');
       return;
@@ -97,6 +104,38 @@
     const button = event.target.closest('[data-hero-go-to]');
     if (button && indicators.contains(button)) showSlide(Number(button.dataset.heroGoTo));
   });
+
+  function moveSlide(direction) {
+    showSlide((activeSlideIndex + direction + slides.length) % slides.length, direction);
+    if (slideTimer) {
+      window.clearInterval(slideTimer);
+      slideTimer = window.setInterval(() => showSlide((activeSlideIndex + 1) % slides.length), 4500);
+    }
+  }
+
+  previousButton.addEventListener('click', () => moveSlide(-1));
+  nextButton.addEventListener('click', () => moveSlide(1));
+
+  slideshow.addEventListener('touchstart', (event) => {
+    if (event.touches.length !== 1 || event.target.closest('.hero-controls, .hero-indicators')) {
+      touchStart = null;
+      return;
+    }
+    touchStart = {x: event.touches[0].clientX, y: event.touches[0].clientY};
+  }, {passive: true});
+
+  slideshow.addEventListener('touchend', (event) => {
+    if (!touchStart || event.changedTouches.length !== 1) return;
+    const deltaX = event.changedTouches[0].clientX - touchStart.x;
+    const deltaY = event.changedTouches[0].clientY - touchStart.y;
+    touchStart = null;
+    if (Math.abs(deltaX) < 40 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    moveSlide(deltaX < 0 ? 1 : -1);
+  }, {passive: true});
+
+  slideshow.addEventListener('touchcancel', () => {
+    touchStart = null;
+  }, {passive: true});
 
   function handleSlideError(slide) {
     slide.addEventListener('error', () => {

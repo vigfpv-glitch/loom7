@@ -21,6 +21,15 @@ create table if not exists public.products (
   permanently_deleted boolean not null default false,
   available_sizes text[] not null default array['S', 'M', 'L', 'XL']::text[]
     check (available_sizes <@ array['S', 'M', 'L', 'XL']::text[]),
+  stock_by_size jsonb not null default '{"S":0,"M":0,"L":0,"XL":0}'::jsonb
+    check (
+      jsonb_typeof(stock_by_size) = 'object'
+      and stock_by_size ?& array['S', 'M', 'L', 'XL']
+      and jsonb_typeof(stock_by_size->'S') = 'number' and (stock_by_size->>'S') ~ '^(0|[1-9][0-9]{0,5})$'
+      and jsonb_typeof(stock_by_size->'M') = 'number' and (stock_by_size->>'M') ~ '^(0|[1-9][0-9]{0,5})$'
+      and jsonb_typeof(stock_by_size->'L') = 'number' and (stock_by_size->>'L') ~ '^(0|[1-9][0-9]{0,5})$'
+      and jsonb_typeof(stock_by_size->'XL') = 'number' and (stock_by_size->>'XL') ~ '^(0|[1-9][0-9]{0,5})$'
+    ),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

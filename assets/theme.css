@@ -1,0 +1,346 @@
+.theme-switch {
+  --width-of-switch: 48px;
+  --height-of-switch: 28px;
+  --size-of-icon: 20px;
+  --slider-offset: 4px;
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: var(--width-of-switch);
+  height: var(--height-of-switch);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.theme-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  appearance: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.theme-switch .slider {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(33, 31, 27, 0.16);
+  border-radius: 30px;
+  background-color: #f4f4f5;
+  transition: background-color 0.4s;
+}
+
+.theme-switch .slider::before {
+  position: absolute;
+  top: 50%;
+  left: var(--slider-offset);
+  width: var(--size-of-icon);
+  height: var(--size-of-icon);
+  border-radius: 50%;
+  background: linear-gradient(40deg, #ff0080, #ff8c00 70%);
+  content: '';
+  transform: translateY(-50%);
+  transition: left 0.4s, background-color 0.4s, box-shadow 0.4s;
+}
+
+.theme-switch input:checked + .slider {
+  background-color: #303136;
+}
+
+.theme-switch input:checked + .slider::before {
+  left: calc(100% - (var(--size-of-icon) + var(--slider-offset)));
+  background: #303136;
+  box-shadow: inset -3px -2px 5px -2px #8983f7, inset -10px -4px 0 #a3dafb;
+}
+
+.theme-switch input:focus-visible + .slider {
+  outline: 3px solid #b18a65;
+  outline-offset: 3px;
+}
+
+.theme-switch input:focus:not(:focus-visible) + .slider {
+  outline: none;
+}
+
+.theme-switch .slider {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.topbar > .theme-switch {
+  position: absolute;
+  top: 50%;
+  right: max(6vw, 18px);
+  transform: translateY(-50%);
+}
+
+.theme-switch-admin {
+  position: fixed;
+  top: 27px;
+  right: calc(5vw + 54px);
+  z-index: 21;
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 48px;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 6px 12px;
+    text-align: center;
+    font-size: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .topbar > .theme-switch {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+  }
+
+  .theme-switch-admin {
+    top: 20px;
+    right: 72px;
+  }
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(ellipse at 12% 18%, rgba(201, 184, 164, 0.06), transparent 38%),
+    radial-gradient(ellipse at 86% 54%, rgba(100, 91, 79, 0.12), transparent 42%),
+    var(--color-paper);
+}
+
+html[data-theme="dark"] {
+  --color-ink: #eee9e1;
+  --color-muted: #b8b1a7;
+  --color-paper: #1b1e1b;
+  --color-sand: #292d28;
+  --color-warm: #5b5146;
+  --color-accent: #d3aa7b;
+  --color-white: #f4f1eb;
+  --color-line: #42463f;
+  --color-dark: #111311;
+  --glass-paper: rgba(31, 34, 30, 0.88);
+  --glass-sand: rgba(42, 46, 40, 0.88);
+  --glass-dark: rgba(17, 19, 17, 0.94);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 14px 28px rgba(0, 0, 0, 0.24);
+  --shadow-lg: 0 18px 34px rgba(0, 0, 0, 0.28);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --shadow-2xl: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .logo img {
+  filter: brightness(0) invert(1);
+}
+
+html[data-theme="dark"] .topbar {
+  color: #f4f1eb;
+}
+
+html[data-theme="dark"] .product {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+html[data-theme="dark"] .collection-progress,
+html[data-theme="dark"] .collection-progress::-webkit-progress-bar {
+  background: #343832;
+}
+
+html[data-theme="dark"] .newsletter-notice.success {
+  background: #24372d;
+  color: #b3dbbd;
+}
+
+html[data-theme="dark"] .newsletter-notice.error {
+  background: #3b2828;
+  color: #efb6b2;
+}
+
+html[data-theme="dark"] .footer {
+  background: rgba(12, 14, 12, 0.96);
+}
+
+html[data-theme="dark"] .theme-switch input:focus-visible + .slider {
+  outline-color: #d3aa7b;
+}
+
+html[data-theme="dark"] body.admin-page {
+  --ink: #eee9e1;
+  --muted: #b8b1a7;
+  --paper: #1b1e1b;
+  --accent: #c4cf9f;
+  --line: #42463f;
+  --danger: #f0998e;
+  --ok: #a4d5b5;
+  background: radial-gradient(ellipse at 12% 0%, #272c25 0, transparent 34rem), var(--paper);
+}
+
+html[data-theme="dark"] body.admin-page .top {
+  background: rgba(27, 30, 27, 0.94);
+}
+
+html[data-theme="dark"] body.admin-page .brand img {
+  filter: brightness(0) invert(1);
+}
+
+html[data-theme="dark"] body.admin-page .auth,
+html[data-theme="dark"] body.admin-page .auth-form,
+html[data-theme="dark"] body.admin-page .admin-menu,
+html[data-theme="dark"] body.admin-page #app .panel,
+html[data-theme="dark"] body.admin-page #app .product-card,
+html[data-theme="dark"] body.admin-page #app table,
+html[data-theme="dark"] body.admin-page #app .overview > div,
+html[data-theme="dark"] body.admin-page .edit-dialog,
+html[data-theme="dark"] body.admin-page dialog {
+  background: #252923;
+  color: var(--ink);
+}
+
+html[data-theme="dark"] body.admin-page .auth-story,
+html[data-theme="dark"] body.admin-page #app .overview .overview-main {
+  background: #30372b;
+}
+
+html[data-theme="dark"] body.admin-page .auth-story p,
+html[data-theme="dark"] body.admin-page .story-foot {
+  color: #c2c8b3;
+}
+
+html[data-theme="dark"] body.admin-page .btn,
+html[data-theme="dark"] body.admin-page .menu-toggle,
+html[data-theme="dark"] body.admin-page .position-dialog .field input,
+html[data-theme="dark"] body.admin-page .media-preview-remove {
+  background: #30342e;
+  color: var(--ink);
+}
+
+html[data-theme="dark"] body.admin-page .field input,
+html[data-theme="dark"] body.admin-page .field textarea,
+html[data-theme="dark"] body.admin-page .field select,
+html[data-theme="dark"] body.admin-page .toolbar input,
+html[data-theme="dark"] body.admin-page .toolbar select,
+html[data-theme="dark"] body.admin-page .inventory-grid input,
+html[data-theme="dark"] body.admin-page #app .field input,
+html[data-theme="dark"] body.admin-page #app .field textarea,
+html[data-theme="dark"] body.admin-page #app .field select,
+html[data-theme="dark"] body.admin-page #app .toolbar input,
+html[data-theme="dark"] body.admin-page #app .toolbar select,
+html[data-theme="dark"] body.admin-page .edit-dialog .field input,
+html[data-theme="dark"] body.admin-page .edit-dialog .field textarea {
+  background: #1c201c;
+  color: var(--ink);
+}
+
+html[data-theme="dark"] body.admin-page input::placeholder,
+html[data-theme="dark"] body.admin-page textarea::placeholder {
+  color: #a9a397;
+}
+
+html[data-theme="dark"] body.admin-page .btn.primary,
+html[data-theme="dark"] body.admin-page #app .btn.primary {
+  background: #667050;
+  border-color: #899375;
+  color: #fff;
+}
+
+html[data-theme="dark"] body.admin-page .btn.danger {
+  background: #382725;
+  border-color: #69413c;
+}
+
+html[data-theme="dark"] body.admin-page .overview,
+html[data-theme="dark"] body.admin-page .count,
+html[data-theme="dark"] body.admin-page #app th,
+html[data-theme="dark"] body.admin-page #app .product-stock-detail > div,
+html[data-theme="dark"] body.admin-page .thumb-placeholder,
+html[data-theme="dark"] body.admin-page .image-preview img,
+html[data-theme="dark"] body.admin-page .media-preview-item,
+html[data-theme="dark"] body.admin-page .skeleton-row {
+  background: #30342e;
+}
+
+html[data-theme="dark"] body.admin-page #app tbody tr:hover,
+html[data-theme="dark"] body.admin-page .btn:hover,
+html[data-theme="dark"] body.admin-page .menu-toggle:hover,
+html[data-theme="dark"] body.admin-page .menu-toggle[aria-expanded="true"] {
+  background: #363b33;
+}
+
+html[data-theme="dark"] body.admin-page .admin-menu .tab,
+html[data-theme="dark"] body.admin-page .admin-menu .menu-link,
+html[data-theme="dark"] body.admin-page .admin-menu .menu-action {
+  color: #d0d0c8;
+}
+
+html[data-theme="dark"] body.admin-page .admin-menu .tab:hover,
+html[data-theme="dark"] body.admin-page .admin-menu .menu-link:hover,
+html[data-theme="dark"] body.admin-page .admin-menu .menu-action:hover,
+html[data-theme="dark"] body.admin-page .admin-menu .tab[aria-current="page"] {
+  background: #363d32;
+  color: #f3f1e9;
+}
+
+html[data-theme="dark"] body.admin-page .menu-divider,
+html[data-theme="dark"] body.admin-page .menu-brand {
+  border-color: #42463f;
+}
+
+html[data-theme="dark"] body.admin-page .menu-brand {
+  border-bottom-color: #42463f;
+}
+
+html[data-theme="dark"] body.admin-page .notice.error {
+  background: #3b2828;
+}
+
+html[data-theme="dark"] body.admin-page .notice.success {
+  background: #24372d;
+}
+
+html[data-theme="dark"] body.admin-page .status.unpublished {
+  background: #343832;
+}
+
+html[data-theme="dark"] body.admin-page #app .collection-view.active {
+  color: #d7dfbd;
+}
+
+html[data-theme="dark"] body.admin-page #app .product-detail-cover,
+html[data-theme="dark"] body.admin-page #app .product-detail-gallery img {
+  background-color: #30342e;
+}
+
+html[data-theme="dark"] body.admin-page .status-toggle:focus-visible {
+  outline-color: #c4cf9f;
+}
+
+html[data-theme="dark"] body.admin-page .auth,
+html[data-theme="dark"] body.admin-page #app .panel,
+html[data-theme="dark"] body.admin-page #app .product-card,
+html[data-theme="dark"] body.admin-page dialog {
+  border-color: #42463f;
+}
+
+html[data-theme="dark"] body.admin-page #app .overview .overview-main {
+  border-color: #48513d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch .slider,
+  .theme-switch .slider::before {
+    transition: none;
+  }
+}

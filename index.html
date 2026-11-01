@@ -7,11 +7,13 @@
   <meta name="robots" content="index,follow">
   <meta name="author" content="Loom7">
   <meta name="description" content="Discover Loom7's Roots collection — timeless styles for modern you. Browse the edit and order directly through Instagram DM.">
+  <link rel="canonical" href="https://loom7.pages.dev/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Loom7">
+  <meta property="og:url" content="https://loom7.pages.dev/">
   <meta property="og:title" content="Loom7 | Timeless styles for modern you">
   <meta property="og:description" content="Discover Loom7's Roots collection and order directly through Instagram DM.">
-  <meta property="og:image" content="LOOM7_logo_transparent.png">
+  <meta property="og:image" content="https://loom7.pages.dev/LOOM7_logo_transparent.png">
   <meta property="og:image:alt" content="Loom7 — Timeless styles for modern you">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="882">
@@ -20,32 +22,51 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Loom7 | Timeless styles for modern you">
   <meta name="twitter:description" content="Discover Loom7's Roots collection and order directly through Instagram DM.">
-  <meta name="twitter:image" content="LOOM7_logo_transparent.png">
+  <meta name="twitter:image" content="https://loom7.pages.dev/LOOM7_logo_transparent.png">
   <meta name="twitter:image:alt" content="Loom7 — Timeless styles for modern you">
+  <script src="assets/theme.js"></script>
   <link rel="icon" type="image/png" href="LOOM7_logo_transparent.png">
   <link rel="apple-touch-icon" href="LOOM7_logo_transparent.png">
   <title>Loom7 | Timeless styles for modern you</title>
   <script type="application/ld+json">
     {
       "@context":"https://schema.org",
-      "@type":"Organization",
-      "name":"Loom7",
-      "description":"Timeless styles for modern you.",
-      "logo":"LOOM7_logo_transparent.png",
-      "sameAs":["https://www.instagram.com/loom7.co/"]
+      "@graph":[
+        {
+          "@type":"Organization",
+          "@id":"https://loom7.pages.dev/#organization",
+          "name":"Loom7",
+          "url":"https://loom7.pages.dev/",
+          "description":"Timeless styles for modern you.",
+          "logo":"https://loom7.pages.dev/LOOM7_logo_transparent.png",
+          "sameAs":["https://www.instagram.com/loom7.co/"]
+        },
+        {
+          "@type":"WebSite",
+          "@id":"https://loom7.pages.dev/#website",
+          "url":"https://loom7.pages.dev/",
+          "name":"Loom7",
+          "publisher":{"@id":"https://loom7.pages.dev/#organization"},
+          "inLanguage":"en"
+        }
+      ]
     }
   </script>
   <script>document.documentElement.classList.add('collection-sync-pending');</script>
   <style>html.collection-sync-pending #collection .grid{visibility:hidden}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Josefin+Slab:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Josefin+Slab:wght@300;400;500;600;700&family=La+Belle+Aurore&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/hanging-cloth.css">
+  <link rel="stylesheet" href="assets/theme.css">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <div class="topbar">Timeless · Thoughtfully Made · Shop at Loom7</div>
+  <div class="topbar"><span>Timeless · Thoughtfully Made · Shop at Loom7</span><label class="theme-switch" title="Toggle day/night mode">
+    <input id="themeModeToggle" type="checkbox" role="switch" aria-label="Use dark mode" aria-checked="false">
+    <span class="slider" aria-hidden="true"></span>
+  </label></div>
   <header class="nav">
     <a class="logo" href="#home" aria-label="Loom7 home"><img src="LOOM7_logo_transparent.png" alt="LOOM7 — Timeless, Thoughtfully Made" width="859" height="598"></a>
     <nav class="navlinks" aria-label="Main navigation"><a href="#collection">Collection</a><a href="#how-to-order">How to order</a><a href="#newsletter">Newsletter</a><a href="#story">About</a></nav>
@@ -97,6 +118,14 @@
       alt="Roots 04 — Loom7 collection look"
       aria-hidden="true"
     />
+    <div class="hero-controls" role="group" aria-label="Hero slideshow controls">
+      <button class="hero-control hero-control-previous" type="button" data-hero-previous aria-label="Show previous hero image">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button class="hero-control hero-control-next" type="button" data-hero-next aria-label="Show next hero image">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
     <div class="hero-indicators" role="group" aria-label="Choose a hero image"></div>
   </div>
 </section>
@@ -116,15 +145,12 @@
       <div class="collection-load-more">
         <p class="collection-count" data-collection-count aria-live="polite"></p>
         <progress class="collection-progress" data-collection-progress max="1" value="0" aria-label="Products viewed"></progress>
-        <a class="collection-load-button" href="collection.html">
+        <div class="collection-load-frame">
+          <a class="collection-load-button" href="collection.html">
           <span>LOAD MORE</span>
           <svg viewBox="0 0 26 24" fill="none" aria-hidden="true"><path class="load-chevron load-chevron-first" d="m2 2 11 10L2 22" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter"/><path class="load-chevron load-chevron-second" d="m13 2 11 10-11 10" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter"/></svg>
-          <svg class="collection-load-orbit" viewBox="0 0 220 58" preserveAspectRatio="none" aria-hidden="true">
-            <defs><linearGradient id="load-more-orbit-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#54a8ff"/><stop offset="0.52" stop-color="#7587ff"/><stop offset="1" stop-color="#c273ff"/></linearGradient></defs>
-            <rect class="orbit-glow" x="1.5" y="1.5" width="217" height="55" rx="27.5"/>
-            <rect class="orbit-core" x="1.5" y="1.5" width="217" height="55" rx="27.5"/>
-          </svg>
-        </a>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -220,6 +246,7 @@
   <script src="assets/product-motion.js"></script>
   <script src="assets/newsletter.js"></script>
   <script src="assets/hanging-cloth.js"></script>
+  <script src="assets/loom-ai.js"></script>
   <script>
     const instagramUrl = 'https://ig.me/m/loom7.co';
     const toast = document.getElementById('toast');

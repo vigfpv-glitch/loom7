@@ -26,7 +26,34 @@
     const identifier = product.website_key
       ? `key=${encodeURIComponent(product.website_key)}`
       : `id=${encodeURIComponent(product.id)}`;
-    return `product.html?${identifier}`;
+    return `product?${identifier}`;
+  }
+
+  function updateCollectionStructuredData() {
+    const items = [...grid.querySelectorAll('.product-card')].map((link, index) => {
+      const name = link.querySelector('.product-copy h3')?.textContent.trim();
+      if (!name) return null;
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        url: new URL(link.href, window.location.href).href,
+        name,
+      };
+    }).filter(Boolean);
+    let structuredData = document.getElementById('collection-structured-data');
+    if (!structuredData) {
+      structuredData = document.createElement('script');
+      structuredData.id = 'collection-structured-data';
+      structuredData.type = 'application/ld+json';
+      document.head.append(structuredData);
+    }
+    structuredData.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'The Roots Collection | Loom7',
+      url: 'https://loom7.pages.dev/collection',
+      mainEntity: {'@type': 'ItemList', itemListElement: items},
+    }).replace(/</g, '\\u003c');
   }
 
   function safeImage(value) {
@@ -204,6 +231,7 @@
       const remainingUploadedCards = [...grid.querySelectorAll('.product:not([data-product-key])')]
         .filter(card => !includedCards.has(card));
       grid.replaceChildren(...orderedCards, ...remainingBuiltinCards, ...remainingUploadedCards);
+      updateCollectionStructuredData();
       document.documentElement.classList.remove('collection-sync-pending');
       if (status) status.hidden = true;
       setupProductVisibility();
@@ -215,6 +243,7 @@
         status.hidden = false;
       }
       setupProductVisibility();
+      updateCollectionStructuredData();
     }
   }
 

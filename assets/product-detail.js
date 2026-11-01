@@ -26,6 +26,75 @@
 
   document.getElementById('year').textContent = new Date().getFullYear();
 
+  function setMeta(selector, attribute, value) {
+    const element = document.head.querySelector(selector);
+    if (element) element.setAttribute(attribute, value);
+  }
+
+  function updateProductMetadata(product) {
+    const url = new URL('/product', window.location.origin);
+    if (key) {
+      url.search = `?key=${encodeURIComponent(key)}`;
+    } else if (id) {
+      url.search = `?id=${encodeURIComponent(id)}`;
+    }
+    const canonical = url.href;
+    const description = `${product.name} from Loom7's Roots clothing collection. ${product.description || 'Explore product details and ask about sizes, price, and availability.'}`
+      .replace(/\s+/g, ' ').slice(0, 160);
+    const productImage = safeImage(product.image_url);
+    const socialImage = productImage ? new URL(productImage, window.location.href).href
+      : 'https://loom7.pages.dev/LOOM7_logo_transparent.png';
+
+    document.title = `${product.name} | Loom7`;
+    setMeta('meta[name="description"]', 'content', description);
+    setMeta('meta[name="robots"]', 'content', 'index,follow');
+    setMeta('link[rel="canonical"]', 'href', canonical);
+    setMeta('meta[property="og:type"]', 'content', 'product');
+    setMeta('meta[property="og:url"]', 'content', canonical);
+    setMeta('meta[property="og:title"]', 'content', document.title);
+    setMeta('meta[property="og:description"]', 'content', description);
+    setMeta('meta[property="og:image"]', 'content', socialImage);
+    setMeta('meta[property="og:image:alt"]', 'content', `${product.name} — Loom7 clothing`);
+    setMeta('meta[name="twitter:title"]', 'content', document.title);
+    setMeta('meta[name="twitter:description"]', 'content', description);
+    setMeta('meta[name="twitter:image"]', 'content', socialImage);
+
+    const price = product.price === null || product.price === undefined || product.price === ''
+      ? null : Number(product.price);
+    const availableStock = product.stock_by_size && typeof product.stock_by_size === 'object'
+      && Object.entries(product.stock_by_size).some(([size, quantity]) =>
+        ['S', 'M', 'L', 'XL'].includes(size) && Number.isInteger(Number(quantity)) && Number(quantity) > 0);
+    const structuredProduct = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description: product.description || `${product.name} from Loom7's Roots clothing collection.`,
+      image: productImage ? [socialImage] : undefined,
+      sku: product.website_key || undefined,
+      brand: {'@type': 'Brand', name: 'Loom7'},
+      offers: Number.isFinite(price) && price >= 0 && product.stock_by_size
+        ? {
+          '@type': 'Offer',
+          url: canonical,
+          priceCurrency: 'INR',
+          price: price.toFixed(2),
+          availability: availableStock
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          seller: {'@type': 'Organization', name: 'Loom7'},
+        }
+        : undefined,
+    };
+    let structuredData = document.getElementById('product-structured-data');
+    if (!structuredData) {
+      structuredData = document.createElement('script');
+      structuredData.id = 'product-structured-data';
+      structuredData.type = 'application/ld+json';
+      document.head.append(structuredData);
+    }
+    structuredData.textContent = JSON.stringify(structuredProduct).replace(/</g, '\\u003c');
+  }
+
   function safeImage(value) {
     if (!value) return '';
     try {
@@ -71,7 +140,7 @@
 
   function renderProduct(product) {
     title.textContent = product.name;
-    document.title = `${product.name} | Loom7`;
+    updateProductMetadata(product);
     descriptionLabel.textContent = product.description || '';
 
     const availableSizes = Array.isArray(product.available_sizes)
@@ -196,7 +265,7 @@
         auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false},
       });
       const productQuery = client.from('products')
-        .select('id, name, description, price, image_url, website_key, available_sizes, gallery_images, video_url')
+        .select('id, name, description, price, image_url, website_key, available_sizes, stock_by_size, gallery_images, video_url')
         .eq('is_visible', true).is('deleted_at', null).eq('permanently_deleted', false);
       const [result, hidden] = await Promise.all([
         (key ? productQuery.eq('website_key', key) : productQuery.eq('id', id)).maybeSingle(),

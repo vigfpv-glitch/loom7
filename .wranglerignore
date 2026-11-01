@@ -1,0 +1,14 @@
+.git/
+.github/
+.wrangler/
+.netlify/
+node_modules/
+.wranglerignore
+.gitignore
+.github/
+supabase/
+netlify/
+package.json
+package-lock.json
+*.md
+assets/desktop.ini

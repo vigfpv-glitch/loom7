@@ -8,6 +8,7 @@ alter table public.products add column if not exists website_key text;
 alter table public.products add column if not exists price numeric(10,2);
 alter table public.products add column if not exists sort_order integer not null default 0;
 alter table public.products add column if not exists available_sizes text[] not null default array['S', 'M', 'L', 'XL']::text[];
+alter table public.products add column if not exists stock_by_size jsonb not null default '{"S":0,"M":0,"L":0,"XL":0}'::jsonb;
 alter table public.products add column if not exists gallery_images text[] not null default array[]::text[];
 alter table public.products add column if not exists video_url text;
 alter table public.products add column if not exists deleted_at timestamptz;
@@ -18,6 +19,15 @@ alter table public.products add constraint products_price_nonnegative
 alter table public.products drop constraint if exists products_available_sizes_valid;
 alter table public.products add constraint products_available_sizes_valid
   check (available_sizes <@ array['S', 'M', 'L', 'XL']::text[]);
+alter table public.products drop constraint if exists products_stock_by_size_valid;
+alter table public.products add constraint products_stock_by_size_valid check (
+  jsonb_typeof(stock_by_size) = 'object'
+  and stock_by_size ?& array['S', 'M', 'L', 'XL']
+  and jsonb_typeof(stock_by_size->'S') = 'number' and (stock_by_size->>'S') ~ '^(0|[1-9][0-9]{0,5})$'
+  and jsonb_typeof(stock_by_size->'M') = 'number' and (stock_by_size->>'M') ~ '^(0|[1-9][0-9]{0,5})$'
+  and jsonb_typeof(stock_by_size->'L') = 'number' and (stock_by_size->>'L') ~ '^(0|[1-9][0-9]{0,5})$'
+  and jsonb_typeof(stock_by_size->'XL') = 'number' and (stock_by_size->>'XL') ~ '^(0|[1-9][0-9]{0,5})$'
+);
 alter table public.products drop constraint if exists products_website_key_format;
 alter table public.products add constraint products_website_key_format
   check (website_key is null or website_key ~ '^[a-z0-9-]{1,64}$');

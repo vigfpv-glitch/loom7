@@ -4,10 +4,21 @@ const appView = $('app');
 const authNotice = $('authNotice');
 const notice = $('notice');
 const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, character => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]));
+const adminPages = {
+  collection: {title: 'The studio.', description: 'Manage products, pricing, inventory, and what appears on your website.', panel: 'productsPanel'},
+  'add-product': {title: 'Add a product.', description: 'Add a new piece to your collection.', panel: 'addProductPanel', navigation: 'collection'},
+  product: {title: 'Product details.', description: 'Review and manage this piece in your collection.', panel: 'productDetailPanel', navigation: 'collection'},
+  subscribers: {title: 'Your community.', description: 'Stay close to the people following Loom7.', panel: 'subscribersPanel'},
+  hero: {title: 'First impressions.', description: 'Shape the opening section visitors see on your website.', panel: 'heroPanel'},
+  about: {title: 'Your story.', description: 'Keep the story and details behind Loom7 up to date.', panel: 'aboutPanel'},
+};
+const requestedAdminPage = new URLSearchParams(window.location.search).get('section');
+let currentAdminPage = Object.hasOwn(adminPages, requestedAdminPage) ? requestedAdminPage : 'collection';
+const requestedCollectionView = new URLSearchParams(window.location.search).get('view');
 let db = null;
 let products = [];
 let productLoadVersion = 0;
-let productsView = 'collection';
+let productsView = requestedCollectionView === 'trash' ? 'trash' : 'collection';
 let subscribers = [];
 let pendingDelete = null;
 let pendingDeleteAction = 'trash';
@@ -50,6 +61,21 @@ function setProductSizes(name, availableSizes) {
   });
 }
 
+function setProductStock(name, stockBySize) {
+  document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+    const quantity = Number(stockBySize?.[input.dataset.size]);
+    input.value = Number.isInteger(quantity) && quantity >= 0 && quantity <= 999999 ? String(quantity) : '0';
+  });
+}
+
+function selectedProductStock(name, availableSizes) {
+  return Object.fromEntries(productSizes.map(size => {
+    const input = document.querySelector(`input[name="${name}"][data-size="${size}"]`);
+    const quantity = Number(input.value);
+    return [size, availableSizes.includes(size) && Number.isInteger(quantity) ? quantity : 0];
+  }));
+}
+
 function showMessage(node, text, type = '') {
   node.textContent = text;
   node.className = 'notice' + (type ? ' ' + type : '');
@@ -62,9 +88,12 @@ function setBusy(button, busy, text) {
 }
 
 function showAuth() {
+  $('authLoading').classList.add('hidden');
   authView.classList.remove('hidden');
   appView.classList.add('hidden');
   $('signout').classList.add('hidden');
+  $('adminNavigation').classList.add('hidden');
+  setAdminMenuOpen(false);
   products = [];
   productsView = 'collection';
   $('productSearch').value = '';
@@ -73,9 +102,8 @@ function showAuth() {
   subscribers = [];
   $('productsList').replaceChildren();
   $('subscribersList').replaceChildren();
-  $('totalProducts').textContent = '—';
   $('visibleProducts').textContent = '—';
-  $('totalSubscribers').textContent = '—';
+  $('hiddenProducts').textContent = '—';
   $('productSearch').value = '';
   $('subscriberSearch').value = '';
   $('visibilityFilter').value = 'all';
@@ -103,7 +131,6 @@ function showAuth() {
   if (aboutImagePreviewUrl) URL.revokeObjectURL(aboutImagePreviewUrl);
   aboutImagePreviewUrl = '';
   notice.classList.add('hidden');
-  selectTab($('productsTab'));
 }
 
 async function enterApp(user) {
@@ -115,11 +142,48 @@ async function enterApp(user) {
     showMessage(authNotice, 'This account is not authorized for the admin panel.', 'error');
     return;
   }
+  $('authLoading').classList.add('hidden');
   authView.classList.add('hidden');
   appView.classList.remove('hidden');
   $('signout').classList.remove('hidden');
+  $('adminNavigation').classList.remove('hidden');
   $('password').value = '';
-  await Promise.all([loadProducts(), loadSubscribers(), loadHeroContent(), loadAboutContent()]);
+  setAdminPage(currentAdminPage);
+  await loadAdminPage(currentAdminPage);
+}
+
+async function loadAdminPage(page) {
+  if (page === 'collection') {
+    await Promise.all([loadProducts(), loadSubscribers()]);
+  } else if (page === 'add-product') {
+    $('productName').focus();
+    await loadProducts();
+  } else if (page === 'product') {
+    await loadProducts();
+  } else if (page === 'subscribers') {
+    await loadSubscribers();
+  } else if (page === 'hero') {
+    await loadHeroContent();
+  } else {
+    await loadAboutContent();
+  }
+}
+
+async function navigateAdminPage(page, {view = 'collection', product = null, replace = false} = {}) {
+  if (!Object.hasOwn(adminPages, page)) return;
+  const params = new URLSearchParams({section: page});
+  if (page === 'collection' && view === 'trash') params.set('view', 'trash');
+  if (page === 'product' && product) params.set('product', product);
+  const url = window.location.pathname + '?' + params;
+  window.history[replace ? 'replaceState' : 'pushState']({}, '', url);
+  currentAdminPage = page;
+  productsView = page === 'collection' && view === 'trash' ? 'trash' : 'collection';
+  $('productSearch').value = '';
+  $('subscriberSearch').value = '';
+  $('visibilityFilter').value = 'all';
+  setAdminPage(page);
+  setAdminMenuOpen(false);
+  await loadAdminPage(page);
 }
 
 function updateAboutPreview(file = null) {
@@ -565,19 +629,29 @@ async function loadProducts() {
     if (saved.status === 'rejected' && website.status === 'rejected') throw new Error('Collection unavailable.');
     products = mergeProducts(saved.status === 'fulfilled' ? saved.value : [], website.status === 'fulfilled' ? website.value : []);
     const activeProducts = products.filter(product => !product.deleted_at && !product.permanently_deleted);
-    $('totalProducts').textContent = activeProducts.length;
     $('visibleProducts').textContent = activeProducts.filter(product => product.is_visible).length;
+    $('hiddenProducts').textContent = activeProducts.filter(product => !product.is_visible).length;
     $('trashCount').textContent = products.filter(product => product.deleted_at && !product.permanently_deleted).length;
     renderProducts();
+    if (currentAdminPage === 'product') renderProductDetail();
     if (saved.status === 'rejected' || website.status === 'rejected') {
-      showMessage($('collectionNotice'), saved.status === 'rejected'
+      const message = saved.status === 'rejected'
         ? 'Showing the website collection. Saved admin products could not be loaded.'
-        : 'Showing saved admin products. The website collection could not be loaded.', 'error');
-      $('collectionRetry').classList.remove('hidden');
+        : 'Showing saved admin products. The website collection could not be loaded.';
+      if (currentAdminPage === 'product') showMessage(notice, message, 'error');
+      else {
+        showMessage($('collectionNotice'), message, 'error');
+        $('collectionRetry').classList.remove('hidden');
+      }
     }
   } catch {
     if (version !== productLoadVersion) return;
-    loadError(box, 'Your collection could not be loaded. Please try again.', loadProducts);
+    if (currentAdminPage === 'product') {
+      showMessage(notice, 'Product details could not be loaded. Please return to the collection and try again.', 'error');
+      $('productDetail').innerHTML = '<p class="empty"><strong>Product unavailable.</strong><a class="btn" href="admin.html?section=collection">Back to collection</a></p>';
+    } else {
+      loadError(box, 'Your collection could not be loaded. Please try again.', loadProducts);
+    }
   }
 }
 
@@ -628,83 +702,167 @@ function renderProducts() {
       : (viewProducts.length ? 'No matching pieces.' : 'Your collection starts here.');
     const emptyMessage = inTrash
       ? (viewProducts.length ? 'Try a different search.' : 'Products you move to Trash will appear here.')
-      : (viewProducts.length ? 'Try another search or change the visibility filter.' : 'Add your first product using the collection details form.');
+      : (viewProducts.length ? 'Try another search or change the visibility filter.' : 'Use + Add new to create your first product.');
     box.innerHTML = '<div class="empty"><strong>' + emptyTitle + '</strong><p>' + emptyMessage + '</p></div>';
     return;
   }
-  const orderedProducts = products.filter(product => !product.deleted_at && !product.permanently_deleted).sort((a, b) =>
-    Number(a.sort_order || 0) - Number(b.sort_order || 0)
-    || String(a.created_at || '').localeCompare(String(b.created_at || ''))
-    || String(a.id).localeCompare(String(b.id)));
-  box.innerHTML = '<table><caption class="sr-only">' + (inTrash ? 'Products in Trash' : 'Products in your collection') + '</caption><thead><tr><th scope="col">Image</th><th scope="col">Product</th><th scope="col">Price</th>' + (inTrash ? '' : '<th scope="col">Position</th>') + '<th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody>' + filtered.map(product => {
+  box.innerHTML = '<div class="product-grid">' + filtered.map(product => {
     const image = safeImage(product.image_url);
     const name = escapeHtml(product.name);
     const id = escapeHtml(product.id);
-    const price = product.price === null || product.price === undefined || product.price === ''
-      ? null : Number(product.price);
-    const priceText = Number.isFinite(price) && price >= 0 ? escapeHtml(priceFormatter.format(price)) : '—';
-    const position = orderedProducts.findIndex(item => item.id === product.id) + 1;
-    const actions = inTrash
-      ? '<button type="button" class="btn" data-restore="' + id + '" aria-label="Restore ' + name + '">Restore</button>'
-        + '<button type="button" class="btn danger" data-permanent-delete="' + id + '" aria-label="Permanently delete ' + name + '">Delete permanently</button>'
-      : '<button type="button" class="btn" data-edit="' + id + '" aria-label="Edit ' + name + '">Edit</button>'
-        + '<button type="button" class="btn" data-move="' + id + '" data-position="' + (position - 1) + '" aria-label="Move ' + name + ' up"' + (position <= 1 ? ' disabled' : '') + '>↑</button>'
-        + '<button type="button" class="btn" data-move="' + id + '" data-position="' + (position + 1) + '" aria-label="Move ' + name + ' down"' + (position >= orderedProducts.length ? ' disabled' : '') + '>↓</button>'
-        + '<button type="button" class="btn danger" data-delete="' + id + '" aria-label="Move ' + name + ' to Trash">Move to Trash</button>';
-    const status = inTrash
-      ? '<span class="status unpublished">In Trash</span>'
-      : '<button type="button" class="status-toggle' + (product.is_visible ? ' is-visible' : ' is-hidden') + '" role="switch" aria-checked="' + String(Boolean(product.is_visible)) + '" data-status-toggle="' + id + '" aria-label="' + (product.is_visible ? 'Visible' : 'Hidden') + ': ' + name + '">' + (product.is_visible ? 'Visible' : 'Hidden') + '</button>';
-    return '<tr><td>' + (image ? '<img class="thumb" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="thumb thumb-placeholder" aria-label="No image">—</span>') + '</td><td class="product-cell"><strong>' + name + '</strong><span class="muted product-description">' + escapeHtml(product.description || 'No description added') + '</span>' + (product.is_website_product ? '<span class="muted">Website product</span>' : '') + '</td><td>' + priceText + '</td>' + (inTrash ? '' : '<td>' + (position || '—') + '</td>') + '<td>' + status + '</td><td><div class="row-actions">' + actions + '</div></td></tr>';
-  }).join('') + '</tbody></table>';
+    return '<a class="product-card" href="admin.html?section=product&amp;product=' + encodeURIComponent(String(product.id)) + '" aria-label="View details for ' + name + '">'
+      + (image ? '<img class="product-card-image" src="' + escapeHtml(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="product-card-image product-card-placeholder" aria-hidden="true">Loom7</span>')
+      + '<span class="product-card-name">' + name + '</span></a>';
+  }).join('') + '</div>';
   box.querySelectorAll('img').forEach(image => image.addEventListener('error', () => {
     const placeholder = document.createElement('span');
-    placeholder.className = 'thumb thumb-placeholder';
-    placeholder.textContent = '—';
-    placeholder.setAttribute('aria-label', 'Image unavailable');
+    placeholder.className = 'product-card-image product-card-placeholder';
+    placeholder.textContent = 'Image unavailable';
     image.replaceWith(placeholder);
   }));
-  box.querySelectorAll('[data-edit]').forEach(button => button.addEventListener('click', () => openEditDialog(products.find(product => String(product.id) === button.dataset.edit))));
-  box.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', () => {
-    pendingDelete = products.find(product => String(product.id) === button.dataset.delete);
-    pendingDeleteAction = 'trash';
-    $('deleteName').textContent = pendingDelete.name;
-    $('deleteHeading').textContent = 'Move this piece to Trash?';
-    $('deleteDescription').textContent = 'The product and its media will be kept in Trash. You can restore it or permanently delete it later.';
-    $('deleteDialog').querySelector('[value="delete"]').textContent = 'Move to Trash';
-    $('deleteDialog').querySelector('[value="cancel"]').textContent = 'Cancel';
-    $('deleteDialog').returnValue = '';
-    $('deleteDialog').showModal();
+}
+
+function renderProductDetail() {
+  const container = $('productDetail');
+  const productId = new URLSearchParams(window.location.search).get('product');
+  const product = products.find(item => String(item.id) === productId);
+  if (!product) {
+    $('workspaceTitle').textContent = 'Product unavailable.';
+    $('workspaceDescription').textContent = 'This product could not be found in your collection.';
+    document.title = 'Loom7 Admin | Product unavailable';
+    container.innerHTML = '<div class="empty"><strong>Product unavailable.</strong><p>It may have been permanently deleted or the link may be incorrect.</p><a class="btn" href="admin.html?section=collection">Back to collection</a></div>';
+    return;
+  }
+  const name = escapeHtml(product.name);
+  const price = product.price === null || product.price === undefined || product.price === '' ? null : Number(product.price);
+  const priceText = Number.isFinite(price) && price >= 0 ? escapeHtml(priceFormatter.format(price)) : 'Ask for price';
+  const inTrash = Boolean(product.deleted_at);
+  const ordered = products.filter(item => !item.deleted_at && !item.permanently_deleted).sort((a, b) =>
+    Number(a.sort_order || 0) - Number(b.sort_order || 0)
+    || String(a.created_at || '').localeCompare(String(b.created_at || ''))
+    || String(a.id).localeCompare(String(b.id)));
+  const position = inTrash ? 0 : ordered.findIndex(item => String(item.id) === String(product.id)) + 1;
+  const image = safeImage(product.image_url);
+  const galleryImages = Array.isArray(product.gallery_images) ? product.gallery_images.map(safeImage).filter(Boolean) : [];
+  const video = safeImage(product.video_url);
+  const availableSizes = Array.isArray(product.available_sizes) ? product.available_sizes : productSizes;
+  const stockBySize = product.stock_by_size && typeof product.stock_by_size === 'object' ? product.stock_by_size : {};
+  const stockRows = productSizes.map(size => '<div><dt>' + size + '</dt><dd>' + escapeHtml(String(Number.isInteger(Number(stockBySize[size])) ? Number(stockBySize[size]) : 0)) + '</dd></div>').join('');
+  const status = inTrash
+    ? '<span class="status unpublished">In Trash</span>'
+    : '<button type="button" class="status-toggle' + (product.is_visible ? ' is-visible' : ' is-hidden') + '" role="switch" aria-checked="' + String(Boolean(product.is_visible)) + '" data-status-toggle="' + escapeHtml(product.id) + '" aria-label="' + (product.is_visible ? 'Visible' : 'Hidden') + ' on website: ' + name + '"><span class="sr-only">' + (product.is_visible ? 'Visible on website' : 'Hidden from website') + '</span></button>';
+  const actions = inTrash
+    ? '<button type="button" class="btn primary" data-restore="' + escapeHtml(product.id) + '">Restore to collection</button><button type="button" class="btn danger" data-permanent-delete="' + escapeHtml(product.id) + '">Delete permanently</button>'
+    : '<button type="button" class="btn primary" data-edit="' + escapeHtml(product.id) + '">Edit product</button><button type="button" class="btn" data-set-position="' + escapeHtml(product.id) + '" data-position="' + position + '" data-position-count="' + ordered.length + '">Set position</button><button type="button" class="btn danger" data-delete="' + escapeHtml(product.id) + '">Move to Trash</button>';
+  $('workspaceTitle').textContent = product.name;
+  $('workspaceDescription').textContent = inTrash ? 'Review this deleted product or restore it to your collection.' : 'Review and manage this piece in your collection.';
+  document.title = 'Loom7 Admin | ' + product.name;
+  container.innerHTML = '<div class="product-detail-heading"><a class="btn" href="admin.html?section=collection' + (inTrash ? '&amp;view=trash' : '') + '">← Back to collection</a>' + status + '</div>'
+    + '<div class="product-detail-grid"><div class="product-detail-media">' + (image ? '<img class="product-detail-cover" src="' + escapeHtml(image) + '" alt="' + name + '" referrerpolicy="no-referrer">' : '<div class="product-detail-cover product-card-placeholder">No product image</div>')
+    + (galleryImages.length ? '<div class="product-detail-gallery">' + galleryImages.map((url, index) => '<img src="' + escapeHtml(url) + '" alt="' + name + ' photo ' + (index + 1) + '" loading="lazy" referrerpolicy="no-referrer">').join('') + '</div>' : '')
+    + (video ? '<video class="product-detail-video" controls preload="metadata" src="' + escapeHtml(video) + '"></video>' : '')
+    + '</div><div class="product-detail-info"><span class="eyebrow">' + (product.is_website_product ? 'Website product' : 'Collection piece') + '</span><h2 id="productDetailHeading">' + name + '</h2><p class="product-detail-price">' + priceText + '</p><p class="product-detail-description">' + escapeHtml(product.description || 'No description added.') + '</p><dl class="product-facts"><div><dt>Available sizes</dt><dd>' + availableSizes.map(escapeHtml).join(', ') + '</dd></div><div><dt>Collection position</dt><dd>' + (position || '—') + '</dd></div></dl><h3>Stock by size</h3><dl class="product-stock-detail">' + stockRows + '</dl><div class="product-detail-actions">' + actions + '</div></div></div>';
+  const cover = container.querySelector('.product-detail-cover[src]');
+  if (cover) cover.addEventListener('error', () => {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'product-detail-cover product-card-placeholder';
+    placeholder.textContent = 'Image unavailable';
+    cover.replaceWith(placeholder);
+  });
+  container.querySelectorAll('.product-detail-gallery img').forEach(galleryImage => galleryImage.addEventListener('error', () => galleryImage.remove()));
+  attachProductActions(container);
+}
+
+function openProductDeleteDialog(product, action) {
+  if (!product) return;
+  pendingDelete = product;
+  pendingDeleteAction = action;
+  $('deleteName').textContent = product.name;
+  $('deleteHeading').textContent = action === 'trash' ? 'Move this piece to Trash?' : 'Permanently delete this piece?';
+  $('deleteDescription').textContent = action === 'trash'
+    ? 'The product and its media will be kept in Trash. You can restore it or permanently delete it later.'
+    : 'This cannot be undone. The product and its stored media will be permanently deleted.';
+  $('deleteDialog').querySelector('[value="delete"]').textContent = action === 'trash' ? 'Move to Trash' : 'Delete permanently';
+  $('deleteDialog').querySelector('[value="cancel"]').textContent = action === 'trash' ? 'Cancel' : 'Keep in Trash';
+  $('deleteDialog').returnValue = '';
+  $('deleteDialog').showModal();
+}
+
+function attachProductActions(container) {
+  container.querySelectorAll('[data-edit]').forEach(button => button.addEventListener('click', () => openEditDialog(products.find(product => String(product.id) === button.dataset.edit))));
+  container.querySelectorAll('[data-set-position]').forEach(button => button.addEventListener('click', () => {
+    const product = products.find(item => String(item.id) === button.dataset.setPosition);
+    if (product) openPositionDialog(product, Number(button.dataset.position), Number(button.dataset.positionCount), button);
   }));
-  box.querySelectorAll('[data-permanent-delete]').forEach(button => button.addEventListener('click', () => {
-    pendingDelete = products.find(product => String(product.id) === button.dataset.permanentDelete);
-    pendingDeleteAction = 'permanent-delete';
-    $('deleteName').textContent = pendingDelete.name;
-    $('deleteHeading').textContent = 'Permanently delete this piece?';
-    $('deleteDescription').textContent = 'This cannot be undone. The product and its stored media will be permanently deleted.';
-    $('deleteDialog').querySelector('[value="delete"]').textContent = 'Delete permanently';
-    $('deleteDialog').querySelector('[value="cancel"]').textContent = 'Keep in Trash';
-    $('deleteDialog').returnValue = '';
-    $('deleteDialog').showModal();
-  }));
-  box.querySelectorAll('[data-restore]').forEach(button => button.addEventListener('click', () => {
+  container.querySelectorAll('[data-delete]').forEach(button => button.addEventListener('click', () =>
+    openProductDeleteDialog(products.find(product => String(product.id) === button.dataset.delete), 'trash')));
+  container.querySelectorAll('[data-permanent-delete]').forEach(button => button.addEventListener('click', () =>
+    openProductDeleteDialog(products.find(product => String(product.id) === button.dataset.permanentDelete), 'permanent-delete')));
+  container.querySelectorAll('[data-restore]').forEach(button => button.addEventListener('click', () => {
     const product = products.find(item => String(item.id) === button.dataset.restore);
     if (product) restoreProduct(product);
   }));
-  box.querySelectorAll('[data-status-toggle]').forEach(button => button.addEventListener('click', () => {
+  container.querySelectorAll('[data-status-toggle]').forEach(button => button.addEventListener('click', () => {
     const product = products.find(item => String(item.id) === button.dataset.statusToggle);
     if (product) updateProductVisibility(product, !product.is_visible);
-  }));
-  box.querySelectorAll('[data-move]').forEach(button => button.addEventListener('click', () => {
-    const product = products.find(item => String(item.id) === button.dataset.move);
-    if (product) reorderProduct(product, Number(button.dataset.position));
   }));
 }
 
 let reorderingProduct = false;
+let positionDialogProduct = null;
+let positionDialogTrigger = null;
+
+function openPositionDialog(product, position, productCount, trigger) {
+  positionDialogProduct = product;
+  positionDialogTrigger = trigger;
+  const input = $('positionInput');
+  input.min = '1';
+  input.max = String(productCount);
+  input.value = String(position);
+  input.setCustomValidity('');
+  $('positionProductName').textContent = product.name;
+  $('positionHint').textContent = 'Enter a position from 1 to ' + productCount + '.';
+  $('positionSave').disabled = false;
+  $('positionDialog').showModal();
+  input.focus();
+  input.select();
+}
+
+$('positionDialog').addEventListener('close', () => {
+  const trigger = positionDialogTrigger;
+  const productId = positionDialogProduct?.id;
+  positionDialogProduct = null;
+  positionDialogTrigger = null;
+  const focusTarget = trigger?.isConnected ? trigger : Array.from(document.querySelectorAll('[data-set-position]'))
+    .find(button => button.dataset.setPosition === String(productId));
+  if (focusTarget) focusTarget.focus();
+});
+$('positionCancel').addEventListener('click', () => $('positionDialog').close());
+$('positionForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const product = positionDialogProduct;
+  const input = $('positionInput');
+  const position = Number(input.value);
+  const minimum = Number(input.min);
+  const maximum = Number(input.max);
+  const valid = Number.isInteger(position) && position >= minimum && position <= maximum;
+  input.setCustomValidity(valid ? '' : 'Enter a whole-number position from ' + minimum + ' to ' + maximum + '.');
+  if (!valid || !input.reportValidity() || !product) return;
+  $('positionSave').disabled = true;
+  $('positionSave').textContent = 'Saving…';
+  try {
+    const reordered = await reorderProduct(product, position);
+    if (reordered) $('positionDialog').close();
+  } finally {
+    $('positionSave').disabled = false;
+    $('positionSave').textContent = 'Set position';
+  }
+});
+
 async function reorderProduct(product, position) {
-  if (!db || reorderingProduct) return;
+  if (!db || reorderingProduct) return false;
   reorderingProduct = true;
-  $('productsList').querySelectorAll('[data-move]').forEach(button => { button.disabled = true; });
+  document.querySelectorAll('[data-set-position]').forEach(button => { button.disabled = true; });
   try {
     const {error} = await db.rpc('reorder_product', {
       p_product_id: product.id,
@@ -713,13 +871,15 @@ async function reorderProduct(product, position) {
     if (error) throw error;
     await loadProducts();
     showMessage(notice, '“' + product.name + '” moved to position ' + position + ' in the collection.', 'success');
+    return true;
   } catch (error) {
     const detail = error && typeof error.message === 'string' ? error.message : String(error);
     showMessage(notice, 'Could not change the product position: ' + detail
       + '. Run the updated supabase/products.sql script, then try again.', 'error');
+    return false;
   } finally {
     reorderingProduct = false;
-    if ($('productsList').querySelector('table')) renderProducts();
+    if (currentAdminPage === 'product') renderProductDetail();
   }
 }
 
@@ -730,7 +890,6 @@ async function loadSubscribers() {
     const {data, error} = await db.from('newsletter_subscribers').select('id,email,full_name,consented_at').order('consented_at', {ascending: false});
     if (error) throw error;
     subscribers = data || [];
-    $('totalSubscribers').textContent = subscribers.length;
     renderSubscribers();
   } catch {
     loadError(box, 'Your subscribers could not be loaded. Please try again.', loadSubscribers);
@@ -786,11 +945,6 @@ function updateNewVideoPreview() {
 
 function updateDescriptionCount() {
   $('descriptionCount').textContent = $('productDescription').value.length.toLocaleString() + ' / 1,000 characters';
-}
-
-function focusEditor() {
-  $('productEditor').scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
-  $('productName').focus({preventScroll: true});
 }
 
 function resetProductForm() {
@@ -957,6 +1111,7 @@ function openEditDialog(product) {
   $('editDescription').value = product.description || '';
   $('editPrice').value = product.price ?? '';
   setProductSizes('edit-product-sizes', product.available_sizes);
+  setProductStock('edit-product-stock', product.stock_by_size);
   editGalleryUrls = Array.isArray(product.gallery_images) ? product.gallery_images.filter(safeImage) : [];
   editRemovedGalleryUrls = new Set();
   editVideoUrl = safeImage(product.video_url);
@@ -1007,6 +1162,7 @@ $('editForm').addEventListener('submit', async event => {
   const values = {name, description: $('editDescription').value.trim() || null,
     price: $('editPrice').value === '' ? null : Number($('editPrice').value),
     available_sizes: selectedProductSizes('edit-product-sizes'),
+    stock_by_size: selectedProductStock('edit-product-stock', selectedProductSizes('edit-product-sizes')),
     image_url: product.image_url || null,
     gallery_images: editGalleryUrls.filter(url => !editRemovedGalleryUrls.has(url)),
     video_url: $('removeProductVideo').checked ? null : editVideoUrl || null,
@@ -1109,15 +1265,66 @@ $('editDialog').addEventListener('cancel', event => {
   closeEditDialog();
 });
 
-function selectTab(tab) {
-  document.querySelectorAll('[data-tab]').forEach(button => {
-    button.setAttribute('aria-selected', String(button === tab));
-    button.tabIndex = button === tab ? 0 : -1;
-  });
-  ['products', 'subscribers', 'hero', 'about'].forEach(section => {
-    $(section + 'Panel').classList.toggle('hidden', tab.dataset.tab !== section);
+function setAdminPage(page) {
+  const config = adminPages[page];
+  $('workspaceTitle').textContent = config.title;
+  $('workspaceDescription').textContent = config.description;
+  document.title = 'Loom7 Admin | ' + config.title.replace(/\.$/, '');
+  $('overview').classList.toggle('hidden', page !== 'collection');
+  Object.values(adminPages).forEach(section => $(section.panel).classList.toggle('hidden', section.panel !== config.panel));
+  const activeNavigation = config.navigation || page;
+  document.querySelectorAll('[data-admin-page]').forEach(link => {
+    if (link.dataset.adminPage === activeNavigation) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
   });
 }
+
+function setAdminMenuOpen(open, returnFocus = false) {
+  $('menuToggle').setAttribute('aria-expanded', String(open));
+  $('menuToggle').setAttribute('aria-label', open ? 'Close admin menu' : 'Open admin menu');
+  $('adminMenu').classList.toggle('is-open', open);
+  $('adminMenu').setAttribute('aria-hidden', String(!open));
+  $('adminMenu').inert = !open;
+  if (returnFocus) $('menuToggle').focus();
+}
+
+$('menuToggle').addEventListener('click', () => {
+  setAdminMenuOpen($('menuToggle').getAttribute('aria-expanded') !== 'true');
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && $('menuToggle').getAttribute('aria-expanded') === 'true') {
+    event.preventDefault();
+    setAdminMenuOpen(false, true);
+  }
+});
+document.addEventListener('click', event => {
+  if ($('menuToggle').getAttribute('aria-expanded') === 'true' && !$('adminNavigation').contains(event.target)) {
+    setAdminMenuOpen(false);
+  }
+});
+document.addEventListener('click', event => {
+  const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+  if (!link) return;
+  const url = new URL(link.href);
+  if (url.origin !== window.location.origin
+    || !/\/admin(?:\.html)?$/.test(url.pathname)
+    || !url.searchParams.has('section')) return;
+  const page = url.searchParams.get('section');
+  if (!Object.hasOwn(adminPages, page)) return;
+  event.preventDefault();
+  void navigateAdminPage(page, {
+    view: url.searchParams.get('view'),
+    product: url.searchParams.get('product'),
+  });
+});
+window.addEventListener('popstate', () => {
+  const params = new URLSearchParams(window.location.search);
+  const requestedPage = params.get('section');
+  currentAdminPage = Object.hasOwn(adminPages, requestedPage) ? requestedPage : 'collection';
+  productsView = currentAdminPage === 'collection' && params.get('view') === 'trash' ? 'trash' : 'collection';
+  setAdminPage(currentAdminPage);
+  void loadAdminPage(currentAdminPage);
+});
 
 $('loginForm').addEventListener('submit', async event => {
   event.preventDefault();
@@ -1155,13 +1362,13 @@ $('productForm').addEventListener('submit', async event => {
   const values = {name, description: $('productDescription').value.trim() || null,
     price: $('productPrice').value === '' ? null : Number($('productPrice').value),
     available_sizes: selectedProductSizes('product-sizes'),
+    stock_by_size: selectedProductStock('product-stock', selectedProductSizes('product-sizes')),
     image_url: currentImageUrl || null,
     gallery_images: [],
     video_url: null,
     is_visible: $('productVisible').checked, sort_order: uploadedPosition};
   const uploadedAssets = [];
   setBusy($('saveButton'), true, 'Saving…');
-  $('addProduct').disabled = true;
   $('productImage').disabled = true;
   $('productGalleryImages').disabled = true;
   $('productVideo').disabled = true;
@@ -1200,7 +1407,6 @@ $('productForm').addEventListener('submit', async event => {
       + ' Your changes are still in the form. Please try again.', 'error');
   } finally {
     setBusy($('saveButton'), false);
-    $('addProduct').disabled = false;
     $('productImage').disabled = false;
     $('productGalleryImages').disabled = false;
     $('productVideo').disabled = false;
@@ -1209,7 +1415,7 @@ $('productForm').addEventListener('submit', async event => {
 
 async function updateProductVisibility(product, isVisible) {
  if (!db) return;
- const button = $('productsList').querySelector(`[data-status-toggle="${CSS.escape(String(product.id))}"]`);
+ const button = document.querySelector(`[data-status-toggle="${CSS.escape(String(product.id))}"]`);
  if (button) button.disabled = true;
   try {
    const values = {is_visible: isVisible};
@@ -1284,7 +1490,8 @@ $('deleteDialog').addEventListener('close', async () => {
      if (result.error) throw result.error;
      if (!result.data?.length) throw new Error('The product could not be moved to Trash. Check your admin access.');
      productsView = 'trash';
-     await loadProducts();
+     if (currentAdminPage === 'product') await navigateAdminPage('collection', {view: 'trash'});
+     else await loadProducts();
      showMessage(notice, '“' + product.name + '” moved to Trash. Its media is kept so it can be restored.', 'success');
      return;
    }
@@ -1301,7 +1508,8 @@ $('deleteDialog').addEventListener('close', async () => {
    }
    if (result.error) throw result.error;
    if (!result.data?.length) throw new Error('The product could not be permanently deleted. Check your admin access.');
-   await loadProducts();
+   if (currentAdminPage === 'product') await navigateAdminPage('collection', {view: 'trash'});
+   else await loadProducts();
    try {
      await removeProductAssets([product.image_url, ...(product.gallery_images || []), product.video_url]);
    } catch (error) {
@@ -1347,17 +1555,8 @@ $('productVideo').addEventListener('change', () => {
 $('productSearch').addEventListener('input', renderProducts);
 $('visibilityFilter').addEventListener('change', renderProducts);
 $('subscriberSearch').addEventListener('input', renderSubscribers);
-$('addProduct').addEventListener('click', () => { resetProductForm(); focusEditor(); });
-const tabs = [...document.querySelectorAll('[data-tab]')];
-tabs.forEach((tab, index) => {
-  tab.addEventListener('click', () => selectTab(tab));
-  tab.addEventListener('keydown', event => {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-    event.preventDefault();
-    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-    selectTab(tabs[next]);
-    tabs[next].focus();
-  });
+$('addProduct').addEventListener('click', () => {
+  void navigateAdminPage('add-product');
 });
 $('signout').addEventListener('click', async () => {
   setBusy($('signout'), true, 'Signing out…');
@@ -1374,6 +1573,7 @@ $('signout').addEventListener('click', async () => {
 });
 
 if (!window.supabase) {
+  showAuth();
   $('loginButton').disabled = true;
   showMessage(authNotice, 'The sign-in service could not be loaded. Check your connection and reload.', 'error');
 } else {
@@ -1381,6 +1581,7 @@ if (!window.supabase) {
   db.auth.getSession().then(async ({data, error}) => {
     if (error) throw error;
     if (data.session) await enterApp(data.session.user);
+    else showAuth();
   }).catch(() => {
     showAuth();
     showMessage(authNotice, 'Could not restore your session. Please sign in again.', 'error');

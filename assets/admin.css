@@ -196,6 +196,43 @@ dialog p{font-size:13px;color:var(--muted)}
 .position-dialog .field-hint{display:block}
 .position-dialog strong{color:var(--ink)}
 
+#inviteSetup.auth--invite{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:22px;max-width:980px;border:0;border-radius:0;overflow:visible;box-shadow:none}
+#inviteSetup .auth-story,#inviteSetup .auth-form{border:2px solid var(--ink);box-shadow:6px 6px var(--ink)}
+#inviteSetup .auth-story{min-height:480px;padding:46px 40px}
+#inviteSetup .auth-story h1{max-width:390px;font-size:clamp(34px,4vw,48px)}
+#inviteSetup .invite-mark{display:grid;width:44px;height:44px;place-items:center;margin-bottom:34px;border:1px solid #61664e;color:#48503a;font:500 27px/1 'Playfair Display',Georgia,serif}
+#inviteSetup .auth-story .eyebrow{margin-bottom:10px}
+#inviteSetup .auth-story .story-foot{padding-top:42px}
+#inviteSetup .auth-form{padding:46px 40px}
+#inviteSetup .auth-form>.eyebrow{margin-bottom:10px}
+#inviteSetup .auth-form h2{font-size:clamp(32px,3.8vw,42px);letter-spacing:-.03em}
+#inviteSetup .invite-intro{margin:0 0 22px;color:var(--muted);font-size:12px}
+#inviteSetup .invite-email-wrap{margin-bottom:24px;padding:12px 14px;border:1px solid var(--line);background:#f5f4ef}
+#inviteSetup .invite-email-label{display:block;margin-bottom:3px;color:var(--accent);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+#inviteSetup .invite-email{margin:0;color:var(--ink);font-size:12px;font-weight:600;overflow-wrap:anywhere}
+#inviteSetup .notice{margin-bottom:20px}
+#inviteSetup .field{gap:7px;margin-bottom:18px}
+#inviteSetup .field input{min-height:48px;border:2px solid var(--ink);border-radius:3px;box-shadow:3px 3px var(--ink);background:#fffefa;transition:border-color .2s,box-shadow .2s}
+#inviteSetup .field input:focus{border-color:#2d8cf0;box-shadow:3px 3px #2d8cf0}
+#inviteSetup .field .field-hint{font-size:11px}
+#inviteSetup .btn.primary{min-height:48px;border:2px solid var(--ink);border-radius:3px;background:#48503a;box-shadow:4px 4px var(--ink);font-size:13px;transition:transform .18s,box-shadow .18s,background .18s}
+#inviteSetup .btn.primary:hover{background:#363e2a}
+#inviteSetup .btn.primary:active{transform:translate(3px,3px);box-shadow:1px 1px var(--ink)}
+#inviteSetup .auth-note{padding-top:14px;border-top:1px solid var(--line);line-height:1.7}
+@media(max-width:1000px){
+  #inviteSetup .auth-story,#inviteSetup .auth-form{padding:36px 28px}
+}
+@media(max-width:600px){
+  #inviteSetup.auth--invite{grid-template-columns:1fr;gap:14px;margin:26px 0 44px}
+  #inviteSetup .auth-story{min-height:auto;padding:26px 24px}
+  #inviteSetup .invite-mark{width:36px;height:36px;margin-bottom:20px;font-size:22px}
+  #inviteSetup .auth-story h1{font-size:32px;margin:8px 0 12px}
+  #inviteSetup .auth-story p{display:block;margin:0;font-size:12px}
+  #inviteSetup .auth-story .story-foot{display:block;padding-top:22px;font-size:8px}
+  #inviteSetup .auth-form{padding:28px 24px}
+  #inviteSetup .auth-form h2{font-size:32px}
+}
+
 body{overflow-x:clip;background:radial-gradient(ellipse at 12% 0%,#e9eadf 0,transparent 34rem),var(--paper)}
 body .top{position:sticky;top:0;z-index:20;padding-right:5vw;background:#f5f4eff2;backdrop-filter:blur(14px)}
 body .hanging-cloth{display:none}

@@ -24,14 +24,14 @@ These browser keys are public by design. **Never** put a `service_role` or secre
 
 ## Manage admin access
 
-The **Admin Access** section lets an existing admin invite another person with full workspace permissions or remove a different admin's access. Admins cannot remove their own access, and the final admin account cannot be removed.
+The **Admin Access** section lets the main admin invite another person with full workspace permissions or remove a different admin's access. Other admins can use their workspace permissions but cannot invite or remove admins. Admins cannot remove their own access, and the final admin account cannot be removed.
 
 1. In Supabase SQL Editor, run [`supabase/admin-access.sql`](supabase/admin-access.sql). It creates locked-down database functions used to grant or revoke membership atomically.
 2. In Cloudflare Pages, open the Loom7 project's **Settings → Variables and Secrets** and add `SUPABASE_SERVICE_ROLE_KEY` as an encrypted secret using the project's legacy `service_role` JWT API key. Configure it for Production and any Preview environments where this feature should work. This key is used only by the server-side Pages Function; never add it to browser code or commit it.
 3. Set the Supabase Auth **Site URL** to `https://loom7.pages.dev` and add the invitation callback to **Redirect URLs**: `https://loom7.pages.dev/admin.html?invite=1`. For a custom domain, set the Cloudflare variable `ADMIN_INVITE_REDIRECT_URL` to that domain's HTTPS `admin.html?invite=1` URL and allow the same URL in Supabase Auth.
 4. Configure Supabase Auth email delivery (a production SMTP provider is recommended). In the admin panel, open **Admin Access** and send an invitation to the person's email. The recipient follows the email link and chooses a password of at least 6 characters.
 
-Only an authenticated, allowlisted admin can call the access-management endpoint. The main admin account `vigil.laflare56@gmail.com` is the only account permitted to remove admin memberships; other admins can still use their workspace access and send invitations. Invitations to emails that already have a Supabase account are rejected rather than silently granting full access. Removing admin access leaves the person's Supabase account intact but removes its workspace permissions.
+Only an authenticated, allowlisted admin can call the access-management endpoint. The main admin account `vigil.laflare56@gmail.com` is the only account permitted to invite or remove admin memberships; other admins can still use their workspace access. Invitations to emails that already have a Supabase account are rejected rather than silently granting full access. Removing admin access leaves the person's Supabase account intact but removes its workspace permissions.
 
 ## Newsletter form and privacy
 

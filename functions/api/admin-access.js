@@ -156,8 +156,10 @@ export async function onRequestGet({request, env}) {
   try {
     const [memberships, users] = await Promise.all([listMemberships(env), listAuthUsers(env)]);
     const usersById = new Map(users.map(user => [user.id, user]));
+    const isMainAdmin = String(auth.user.email || '').toLowerCase() === OWNER_ADMIN_EMAIL;
     return jsonResponse({
-      can_remove_admins: String(auth.user.email || '').toLowerCase() === OWNER_ADMIN_EMAIL,
+      can_invite_admins: isMainAdmin,
+      can_remove_admins: isMainAdmin,
       admins: memberships.map(member => {
         const account = usersById.get(member.user_id);
         return {
@@ -177,6 +179,9 @@ export async function onRequestGet({request, env}) {
 export async function onRequestPost({request, env}) {
   const auth = await requestAccess(request, env);
   if (auth.response) return auth.response;
+  if (String(auth.user.email || '').toLowerCase() !== OWNER_ADMIN_EMAIL) {
+    return jsonResponse({error: 'Only the main admin can invite admin accounts.'}, 403);
+  }
   if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
     return jsonResponse({error: 'Content-Type must be application/json.'}, 415);
   }

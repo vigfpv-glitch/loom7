@@ -131,7 +131,9 @@ async function loadAdminAccess() {
   const list = $('adminAccessList');
   list.innerHTML = '<p class="muted">Loading admin accounts…</p>';
   try {
-    const {admins, can_remove_admins: canRemoveAdmins} = await requestAdminAccess();
+    const {admins, can_invite_admins: canInviteAdmins, can_remove_admins: canRemoveAdmins} = await requestAdminAccess();
+    $('adminInviteForm').classList.toggle('hidden', canInviteAdmins !== true);
+    $('.admin-access-hint').classList.toggle('hidden', canInviteAdmins !== true);
     if (!Array.isArray(admins)) throw new Error('The admin access service returned an invalid account list.');
     if (!admins.length) {
       list.innerHTML = '<p class="empty">No admin accounts were found.</p>';

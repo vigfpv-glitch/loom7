@@ -34,6 +34,7 @@ let editVideoPreviewUrl = '';
 let editGalleryUrls = [];
 let editRemovedGalleryUrls = new Set();
 let editVideoUrl = '';
+let currentHeroContent = {...window.Loom7Hero.defaults};
 let currentHeroImages = [...window.Loom7Hero.defaults.image_urls];
 let heroNewImages = [];
 let heroPreviewObjectUrls = [];
@@ -117,6 +118,7 @@ function showAuth() {
   heroSchemaReady = false;
   $('heroFields').disabled = true;
   $('heroUpload').value = '';
+  currentHeroContent = {...window.Loom7Hero.defaults};
   currentHeroImages = [...window.Loom7Hero.defaults.image_urls];
   heroNewImages = [];
   updateHeroPreview();
@@ -301,10 +303,9 @@ async function loadHeroContent() {
       error = legacy.error;
       if (!error) {
         const content = window.Loom7Hero.normalize(data || {});
+        currentHeroContent = content;
         $('heroTitle').value = content.title;
         $('heroSubtitle').value = content.subtitle;
-        $('heroButtonText').value = content.cta_text;
-        $('heroButtonLink').value = content.cta_link;
         currentHeroImages = content.image_urls;
         heroNewImages = [];
         $('heroUpload').value = '';
@@ -319,10 +320,9 @@ async function loadHeroContent() {
     }
     if (error) throw error;
     const content = window.Loom7Hero.normalize(data || {});
+    currentHeroContent = content;
     $('heroTitle').value = content.title;
     $('heroSubtitle').value = content.subtitle;
-    $('heroButtonText').value = content.cta_text;
-    $('heroButtonLink').value = content.cta_link;
     currentHeroImages = content.image_urls;
     heroNewImages = [];
     $('heroUpload').value = '';
@@ -360,11 +360,7 @@ $('heroForm').addEventListener('submit', async event => {
     return;
   }
   const title = $('heroTitle').value.trim();
-  const buttonText = $('heroButtonText').value.trim();
-  const buttonLink = window.Loom7Hero.safeUrl($('heroButtonLink').value.trim());
   $('heroTitle').setCustomValidity(title ? '' : 'Enter a title.');
-  $('heroButtonText').setCustomValidity(buttonText ? '' : 'Enter button text.');
-  $('heroButtonLink').setCustomValidity(buttonLink ? '' : 'Enter a complete HTTP or HTTPS URL without credentials.');
   validateHeroImage();
   if (!$('heroForm').reportValidity()) return;
   if (!currentHeroImages.length && !heroNewImages.length) {
@@ -372,7 +368,7 @@ $('heroForm').addEventListener('submit', async event => {
     return;
   }
   const values = {id: window.Loom7Hero.id, title, subtitle: $('heroSubtitle').value.trim(),
-    cta_text: buttonText, cta_link: buttonLink, image_url: currentHeroImages[0] || '',
+    cta_text: currentHeroContent.cta_text, cta_link: currentHeroContent.cta_link, image_url: currentHeroImages[0] || '',
     image_urls: [...currentHeroImages]};
   const version = heroLoadVersion;
   const uploadedPaths = [];
@@ -397,6 +393,7 @@ $('heroForm').addEventListener('submit', async event => {
     if (error) throw error;
     uploadedPaths.length = 0;
     if (version !== heroLoadVersion) return;
+    currentHeroContent = {...currentHeroContent, ...values};
     currentHeroImages = values.image_urls;
     heroNewImages = [];
     $('heroUpload').value = '';
@@ -533,9 +530,7 @@ $('heroUpload').addEventListener('change', () => {
   else heroNewImages.splice(index - currentHeroImages.length, 1);
   updateHeroPreview();
 });
-['heroTitle', 'heroButtonText', 'heroButtonLink'].forEach(id => {
-  $(id).addEventListener('input', () => $(id).setCustomValidity(''));
-});
+$('heroTitle').addEventListener('input', () => $('heroTitle').setCustomValidity(''));
 function loading(box, label) {
   box.setAttribute('aria-busy', 'true');
   box.innerHTML = '<span class="loading-label">' + label + '</span><div aria-hidden="true"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div>';

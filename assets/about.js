@@ -43,7 +43,10 @@
   const title = document.getElementById('story-title');
   const body = document.getElementById('story-text');
   const image = document.getElementById('story-image');
-  if (!label || !title || !body || !image) return;
+  if (!label || !title || !body || !image) {
+    document.documentElement.classList.remove('about-sync-pending');
+    return;
+  }
 
   image.addEventListener('error', () => {
     if (image.getAttribute('src') !== defaults.image_url) {
@@ -55,7 +58,10 @@
     image.parentElement.classList.add('is-fallback');
   });
 
-  if (!window.supabase) return;
+  if (!window.supabase) {
+    document.documentElement.classList.remove('about-sync-pending');
+    return;
+  }
 
   async function loadAbout() {
     try {
@@ -78,6 +84,8 @@
       image.src = content.image_url;
     } catch (error) {
       console.warn('Could not load published About Section content.', error);
+    } finally {
+      document.documentElement.classList.remove('about-sync-pending');
     }
   }
 

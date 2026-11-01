@@ -1,7 +1,7 @@
 (() => {
   const defaults = Object.freeze({
     label: 'About',
-    title: 'WEAR YOUR OWN RHYTHM.',
+    title: 'Wear your own Rhythm',
     body: 'LOOM7 is about clothing that feels like you — not clothing that tells you who to be. Pieces designed for the way you move through every day.',
     cta_text: 'Follow on Instagram',
     cta_link: 'https://www.instagram.com/loom7.co/',

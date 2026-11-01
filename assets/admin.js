@@ -41,6 +41,7 @@ let heroLoaded = false;
 let heroSchemaReady = false;
 let heroLoadVersion = 0;
 let currentAboutImage = '';
+let currentAboutContent = {...window.Loom7About.defaults};
 let aboutImagePreviewUrl = '';
 let aboutLoaded = false;
 let aboutSchemaReady = false;
@@ -215,11 +216,9 @@ async function loadAboutContent() {
     if (version !== aboutLoadVersion) return;
     if (error) throw error;
     const content = window.Loom7About.normalize(data || {});
-    $('aboutLabel').value = content.label;
+    currentAboutContent = content;
     $('aboutTitle').value = content.title;
     $('aboutBody').value = content.body;
-    $('aboutButtonText').value = content.cta_text;
-    $('aboutButtonLink').value = content.cta_link;
     $('aboutImageAlt').value = content.image_alt;
     currentAboutImage = content.image_url;
     $('aboutImage').value = '';
@@ -433,25 +432,19 @@ $('aboutForm').addEventListener('submit', async event => {
     showMessage($('aboutNotice'), 'Run supabase/about.sql in your Supabase SQL Editor before saving About Section changes.', 'error');
     return;
   }
-  const label = $('aboutLabel').value.trim();
   const title = $('aboutTitle').value.trim();
-  const buttonText = $('aboutButtonText').value.trim();
-  const buttonLink = window.Loom7About.safeUrl($('aboutButtonLink').value.trim());
-  $('aboutLabel').setCustomValidity(label ? '' : 'Enter a section label.');
   $('aboutTitle').setCustomValidity(title ? '' : 'Enter a headline.');
-  $('aboutButtonText').setCustomValidity(buttonText ? '' : 'Enter button text.');
-  $('aboutButtonLink').setCustomValidity(buttonLink ? '' : 'Enter a complete HTTP or HTTPS URL without credentials.');
   const selectedFile = $('aboutImage').files[0] || null;
   $('aboutImage').setCustomValidity(validAboutImage(selectedFile) ? '' : 'Choose a JPEG, PNG, or WebP image up to 5 MB.');
   if (!$('aboutForm').reportValidity()) return;
 
   const values = {
     id: window.Loom7About.id,
-    label,
+    label: currentAboutContent.label,
     title,
     body: $('aboutBody').value.trim(),
-    cta_text: buttonText,
-    cta_link: buttonLink,
+    cta_text: currentAboutContent.cta_text,
+    cta_link: currentAboutContent.cta_link,
     image_url: currentAboutImage,
     image_alt: $('aboutImageAlt').value.trim(),
   };
@@ -481,6 +474,7 @@ $('aboutForm').addEventListener('submit', async event => {
     uploadedPath = '';
     imageUploaded = false;
     if (version !== aboutLoadVersion) return;
+    currentAboutContent = {...currentAboutContent, ...values};
     currentAboutImage = values.image_url;
     $('aboutImage').value = '';
     updateAboutPreview();

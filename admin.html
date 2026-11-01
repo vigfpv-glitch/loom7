@@ -87,16 +87,13 @@
       </section>
       <section id="aboutPanel" class="panel hidden hero-editor" aria-labelledby="aboutTab">
         <span class="eyebrow">Your brand story</span><h2>About Section</h2>
-        <p class="panel-intro">Edit the About section on your homepage, including its image and Instagram button.</p>
+        <p class="panel-intro">Edit the About section on your homepage, including its headline, text, and image.</p>
         <div id="aboutNotice" class="notice hidden" role="status" aria-live="polite"></div>
         <button id="aboutRetry" class="btn hidden" type="button">Try loading again</button>
         <form id="aboutForm">
           <fieldset id="aboutFields" disabled>
-            <div class="field"><label for="aboutLabel">Section label <span class="required">Required</span></label><input id="aboutLabel" maxlength="80" required></div>
             <div class="field"><label for="aboutTitle">Headline <span class="required">Required</span></label><textarea id="aboutTitle" maxlength="200" required></textarea></div>
             <div class="field"><label for="aboutBody">Paragraph</label><textarea id="aboutBody" maxlength="1200"></textarea></div>
-            <div class="field"><label for="aboutButtonText">Button text <span class="required">Required</span></label><input id="aboutButtonText" maxlength="120" required></div>
-            <div class="field"><label for="aboutButtonLink">Button link <span class="required">Required</span></label><input id="aboutButtonLink" type="url" maxlength="2000" required aria-describedby="aboutLinkHint"><span id="aboutLinkHint" class="field-hint">Use a complete HTTP or HTTPS URL.</span></div>
             <div class="field"><label for="aboutImage">About image</label><input id="aboutImage" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="aboutImageHint"><span id="aboutImageHint" class="field-hint">Optional. Upload a JPEG, PNG, or WebP image up to 5 MB. Leave empty to keep the current image.</span></div>
             <div id="aboutImagePreview" class="image-preview"><img id="aboutPreviewImage" alt="About image preview"><span id="aboutPreviewStatus" class="field-hint" role="status"></span></div>
             <div class="field"><label for="aboutImageAlt">Image description (alt text)</label><input id="aboutImageAlt" maxlength="300"></div>

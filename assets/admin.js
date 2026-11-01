@@ -213,7 +213,7 @@ async function enterApp(user) {
     await db.auth.signOut();
     showAuth();
     showMessage(authNotice, 'This account is not authorized for the admin panel.', 'error');
-    return;
+    return false;
   }
   $('authLoading').classList.add('hidden');
   authView.classList.add('hidden');
@@ -223,6 +223,7 @@ async function enterApp(user) {
   $('password').value = '';
   setAdminPage(currentAdminPage);
   await loadAdminPage(currentAdminPage);
+  return true;
 }
 
 async function loadAdminPage(page) {
@@ -1392,22 +1393,29 @@ $('inviteSetupForm').addEventListener('submit', async event => {
   if (!db) return;
   const password = $('invitePassword').value;
   const confirmation = $('invitePasswordConfirm').value;
-  $('invitePassword').setCustomValidity(password.length >= 12 ? '' : 'Use at least 12 characters.');
+  $('invitePassword').setCustomValidity(password.length >= 6 ? '' : 'Use at least 6 characters.');
   $('invitePasswordConfirm').setCustomValidity(password === confirmation ? '' : 'Passwords do not match.');
   if (!$('inviteSetupForm').reportValidity()) return;
 
   setBusy($('inviteSetupButton'), true, 'Setting password…');
+  let passwordUpdated = false;
   try {
     const {data, error} = await db.auth.updateUser({password});
     if (error) throw error;
+    passwordUpdated = true;
+    const authorized = await enterApp(data.user);
+    if (!authorized) return;
     const url = new URL(window.location.href);
     url.searchParams.delete('invite');
     url.hash = '';
     window.history.replaceState({}, '', url);
-    await enterApp(data.user);
   } catch (error) {
-    showAuth();
-    showMessage(authNotice, 'Your password could not be set or admin access could not be verified. Ask the person who invited you to check the invitation.', 'error');
+    console.error('Could not complete admin invitation setup.', error);
+    showInviteSetup($('inviteSetupEmail').textContent);
+    const message = passwordUpdated
+      ? 'Your password was saved, but admin access could not be verified. Try signing in with your new password or ask the person who invited you to check your access.'
+      : `Your password could not be saved: ${error.message || 'Check the password requirements and try again.'}`;
+    showMessage($('inviteSetupNotice'), message, 'error');
   } finally {
     setBusy($('inviteSetupButton'), false);
   }

@@ -222,7 +222,12 @@ async function enterApp(user) {
   $('adminNavigation').classList.remove('hidden');
   $('password').value = '';
   setAdminPage(currentAdminPage);
-  await loadAdminPage(currentAdminPage);
+  try {
+    await loadAdminPage(currentAdminPage);
+  } catch (error) {
+    console.error('Signed in, but could not load the current admin page.', error);
+    showMessage(notice, `You are signed in, but this page could not be loaded: ${error.message || 'Try refreshing the page.'}`, 'error');
+  }
   return true;
 }
 

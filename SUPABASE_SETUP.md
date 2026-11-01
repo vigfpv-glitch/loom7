@@ -31,7 +31,7 @@ The **Admin Access** section lets an existing admin invite another person with f
 3. Set the Supabase Auth **Site URL** to `https://loom7.pages.dev` and add the invitation callback to **Redirect URLs**: `https://loom7.pages.dev/admin.html?invite=1`. For a custom domain, set the Cloudflare variable `ADMIN_INVITE_REDIRECT_URL` to that domain's HTTPS `admin.html?invite=1` URL and allow the same URL in Supabase Auth.
 4. Configure Supabase Auth email delivery (a production SMTP provider is recommended). In the admin panel, open **Admin Access** and send an invitation to the person's email. The recipient follows the email link and chooses a password of at least 6 characters.
 
-Only an authenticated, allowlisted admin can call the access-management endpoint. Invitations to emails that already have a Supabase account are rejected rather than silently granting full access. Removing admin access leaves the person's Supabase account intact but removes its workspace permissions.
+Only an authenticated, allowlisted admin can call the access-management endpoint. The main admin account `vigil.laflare56@gmail.com` is the only account permitted to remove admin memberships; other admins can still use their workspace access and send invitations. Invitations to emails that already have a Supabase account are rejected rather than silently granting full access. Removing admin access leaves the person's Supabase account intact but removes its workspace permissions.
 
 ## Newsletter form and privacy
 

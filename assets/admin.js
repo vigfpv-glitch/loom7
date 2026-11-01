@@ -131,7 +131,7 @@ async function loadAdminAccess() {
   const list = $('adminAccessList');
   list.innerHTML = '<p class="muted">Loading admin accounts…</p>';
   try {
-    const {admins} = await requestAdminAccess();
+    const {admins, can_remove_admins: canRemoveAdmins} = await requestAdminAccess();
     if (!Array.isArray(admins)) throw new Error('The admin access service returned an invalid account list.');
     if (!admins.length) {
       list.innerHTML = '<p class="empty">No admin accounts were found.</p>';
@@ -144,7 +144,9 @@ async function loadAdminAccess() {
       const added = Number.isFinite(createdAt) ? new Date(createdAt).toLocaleDateString() : '—';
       const access = admin.is_current_user
         ? '<span class="admin-access-self">You</span>'
-        : `<button class="btn danger" type="button" data-admin-revoke="${userId}" data-admin-email="${email}">Remove access</button>`;
+        : canRemoveAdmins
+          ? `<button class="btn danger" type="button" data-admin-revoke="${userId}" data-admin-email="${email}">Remove access</button>`
+          : '<span class="admin-access-self">Admin</span>';
       return `<tr><td>${email}</td><td>${added}</td><td>${access}</td></tr>`;
     }).join('')}</tbody></table>`;
   } catch (error) {

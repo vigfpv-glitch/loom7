@@ -1,6 +1,7 @@
 const SUPABASE_URL = 'https://oofrtvkdljiphcsydcjo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_18ficoJXs66FopQnhcmkbA_kpDSF3yX';
 const DEFAULT_INVITE_REDIRECT = 'https://loom7.pages.dev/admin.html?invite=1';
+const OWNER_ADMIN_EMAIL = 'vigil.laflare56@gmail.com';
 const MAX_BODY_BYTES = 2048;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -156,6 +157,7 @@ export async function onRequestGet({request, env}) {
     const [memberships, users] = await Promise.all([listMemberships(env), listAuthUsers(env)]);
     const usersById = new Map(users.map(user => [user.id, user]));
     return jsonResponse({
+      can_remove_admins: String(auth.user.email || '').toLowerCase() === OWNER_ADMIN_EMAIL,
       admins: memberships.map(member => {
         const account = usersById.get(member.user_id);
         return {
@@ -249,6 +251,9 @@ export async function onRequestPost({request, env}) {
 export async function onRequestDelete({request, env}) {
   const auth = await requestAccess(request, env);
   if (auth.response) return auth.response;
+  if (String(auth.user.email || '').toLowerCase() !== OWNER_ADMIN_EMAIL) {
+    return jsonResponse({error: 'Only the main admin can remove admin access.'}, 403);
+  }
   if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
     return jsonResponse({error: 'Content-Type must be application/json.'}, 415);
   }

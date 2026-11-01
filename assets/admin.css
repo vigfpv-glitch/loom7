@@ -213,7 +213,7 @@ dialog p{font-size:13px;color:var(--muted)}
 #inviteSetup .notice{margin-bottom:20px}
 #inviteSetup .field{gap:7px;margin-bottom:18px}
 #inviteSetup .field input{min-height:48px;border:2px solid var(--ink);border-radius:3px;box-shadow:3px 3px var(--ink);background:#fffefa;transition:border-color .2s,box-shadow .2s}
-#inviteSetup .field input:focus{border-color:#2d8cf0;box-shadow:3px 3px #2d8cf0}
+#inviteSetup .field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #777d5726}
 #inviteSetup .field .field-hint{font-size:11px}
 #inviteSetup .btn.primary{min-height:48px;border:2px solid var(--ink);border-radius:3px;background:#48503a;box-shadow:4px 4px var(--ink);font-size:13px;transition:transform .18s,box-shadow .18s,background .18s}
 #inviteSetup .btn.primary:hover{background:#363e2a}

@@ -11,9 +11,11 @@ const adminPages = {
   subscribers: {title: 'Your community.', description: 'Stay close to the people following Loom7.', panel: 'subscribersPanel'},
   hero: {title: 'First impressions.', description: 'Shape the opening section visitors see on your website.', panel: 'heroPanel'},
   about: {title: 'Your story.', description: 'Keep the story and details behind Loom7 up to date.', panel: 'aboutPanel'},
+  'admin-access': {title: 'Trusted access.', description: 'Invite trusted people to manage the Loom7 workspace.', panel: 'adminAccessPanel'},
 };
 const requestedAdminPage = new URLSearchParams(window.location.search).get('section');
 let currentAdminPage = Object.hasOwn(adminPages, requestedAdminPage) ? requestedAdminPage : 'collection';
+const invitationFlow = new URLSearchParams(window.location.search).get('invite') === '1';
 const requestedCollectionView = new URLSearchParams(window.location.search).get('view');
 let db = null;
 let products = [];
@@ -52,6 +54,14 @@ const priceFormatter = new Intl.NumberFormat('en-IN', {
 });
 const productSizes = ['S', 'M', 'L', 'XL'];
 
+const adminAccessTab = document.createElement('a');
+adminAccessTab.id = 'adminAccessTab';
+adminAccessTab.className = 'tab';
+adminAccessTab.href = 'admin.html?section=admin-access';
+adminAccessTab.dataset.adminPage = 'admin-access';
+adminAccessTab.innerHTML = '<svg class="menu-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 2.8 7.7 7 10 4.2-2.3 7-5.5 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Admin Access</span>';
+$('aboutTab').after(adminAccessTab);
+
 function selectedProductSizes(name) {
   return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(input => input.value);
 }
@@ -83,6 +93,65 @@ function showMessage(node, text, type = '') {
   node.className = 'notice' + (type ? ' ' + type : '');
 }
 
+function showInviteSetup(email) {
+  $('authLoading').classList.add('hidden');
+  authView.classList.add('hidden');
+  $('inviteSetup').classList.remove('hidden');
+  appView.classList.add('hidden');
+  $('adminNavigation').classList.add('hidden');
+  $('signout').classList.add('hidden');
+  $('inviteSetupEmail').textContent = email || 'Complete your invited admin account.';
+  $('invitePassword').focus();
+}
+
+async function requestAdminAccess(method = 'GET', payload) {
+  const {data, error} = await db.auth.getSession();
+  if (error) throw error;
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Your session has expired. Sign in again.');
+  const response = await fetch('/api/admin-access', {
+    method,
+    headers: {
+      authorization: `Bearer ${token}`,
+      ...(payload ? {'content-type': 'application/json'} : {}),
+    },
+    ...(payload ? {body: JSON.stringify(payload)} : {}),
+  });
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error('The admin access service returned an unreadable response.');
+  }
+  if (!response.ok) throw new Error(result.error || 'Admin access request failed.');
+  return result;
+}
+
+async function loadAdminAccess() {
+  const list = $('adminAccessList');
+  list.innerHTML = '<p class="muted">Loading admin accounts…</p>';
+  try {
+    const {admins} = await requestAdminAccess();
+    if (!Array.isArray(admins)) throw new Error('The admin access service returned an invalid account list.');
+    if (!admins.length) {
+      list.innerHTML = '<p class="empty">No admin accounts were found.</p>';
+      return;
+    }
+    list.innerHTML = `<table><thead><tr><th scope="col">Email</th><th scope="col">Added</th><th scope="col">Access</th></tr></thead><tbody>${admins.map(admin => {
+      const email = escapeHtml(admin.email || 'Email unavailable');
+      const userId = escapeHtml(admin.user_id || '');
+      const createdAt = Date.parse(admin.created_at);
+      const added = Number.isFinite(createdAt) ? new Date(createdAt).toLocaleDateString() : '—';
+      const access = admin.is_current_user
+        ? '<span class="admin-access-self">You</span>'
+        : `<button class="btn danger" type="button" data-admin-revoke="${userId}" data-admin-email="${email}">Remove access</button>`;
+      return `<tr><td>${email}</td><td>${added}</td><td>${access}</td></tr>`;
+    }).join('')}</tbody></table>`;
+  } catch (error) {
+    list.innerHTML = `<p class="notice error">${escapeHtml(error.message || 'Could not load admin accounts.')}</p>`;
+  }
+}
+
 function setBusy(button, busy, text) {
   if (busy) button.dataset.label = button.textContent;
   button.disabled = busy;
@@ -92,6 +161,7 @@ function setBusy(button, busy, text) {
 function showAuth() {
   $('authLoading').classList.add('hidden');
   authView.classList.remove('hidden');
+  $('inviteSetup').classList.add('hidden');
   appView.classList.add('hidden');
   $('signout').classList.add('hidden');
   $('adminNavigation').classList.add('hidden');
@@ -167,6 +237,8 @@ async function loadAdminPage(page) {
     await loadSubscribers();
   } else if (page === 'hero') {
     await loadHeroContent();
+  } else if (page === 'admin-access') {
+    await loadAdminAccess();
   } else {
     await loadAboutContent();
   }
@@ -1315,6 +1387,74 @@ window.addEventListener('popstate', () => {
   void loadAdminPage(currentAdminPage);
 });
 
+$('inviteSetupForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!db) return;
+  const password = $('invitePassword').value;
+  const confirmation = $('invitePasswordConfirm').value;
+  $('invitePassword').setCustomValidity(password.length >= 12 ? '' : 'Use at least 12 characters.');
+  $('invitePasswordConfirm').setCustomValidity(password === confirmation ? '' : 'Passwords do not match.');
+  if (!$('inviteSetupForm').reportValidity()) return;
+
+  setBusy($('inviteSetupButton'), true, 'Setting password…');
+  try {
+    const {data, error} = await db.auth.updateUser({password});
+    if (error) throw error;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('invite');
+    url.hash = '';
+    window.history.replaceState({}, '', url);
+    await enterApp(data.user);
+  } catch (error) {
+    showAuth();
+    showMessage(authNotice, 'Your password could not be set or admin access could not be verified. Ask the person who invited you to check the invitation.', 'error');
+  } finally {
+    setBusy($('inviteSetupButton'), false);
+  }
+});
+$('invitePassword').addEventListener('input', () => $('invitePassword').setCustomValidity(''));
+$('invitePasswordConfirm').addEventListener('input', () => $('invitePasswordConfirm').setCustomValidity(''));
+
+$('adminInviteForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const email = $('adminInviteEmail').value.trim();
+  $('adminInviteEmail').setCustomValidity(email ? '' : 'Enter an email address.');
+  if (!$('adminInviteForm').reportValidity()) return;
+  setBusy($('adminInviteButton'), true, 'Sending invitation…');
+  $('adminInviteFields').disabled = true;
+  try {
+    const result = await requestAdminAccess('POST', {email});
+    $('adminInviteForm').reset();
+    await loadAdminAccess();
+    showMessage($('adminAccessNotice'), result.message || 'Invitation sent.', 'success');
+  } catch (error) {
+    showMessage($('adminAccessNotice'), error.message || 'Could not send the invitation.', 'error');
+  } finally {
+    $('adminInviteFields').disabled = false;
+    setBusy($('adminInviteButton'), false);
+  }
+});
+
+$('adminAccessRetry').addEventListener('click', () => {
+  void loadAdminAccess();
+});
+$('adminAccessList').addEventListener('click', async event => {
+  const button = event.target instanceof Element ? event.target.closest('[data-admin-revoke]') : null;
+  if (!button) return;
+  const email = button.dataset.adminEmail || 'this account';
+  if (!window.confirm(`Remove admin access for ${email}? They will no longer be able to manage the Loom7 workspace.`)) return;
+  setBusy(button, true, 'Removing…');
+  try {
+    const result = await requestAdminAccess('DELETE', {user_id: button.dataset.adminRevoke});
+    await loadAdminAccess();
+    showMessage($('adminAccessNotice'), result.message || 'Admin access removed.', 'success');
+  } catch (error) {
+    showMessage($('adminAccessNotice'), error.message || 'Could not remove admin access.', 'error');
+  } finally {
+    setBusy(button, false);
+  }
+});
+
 $('loginForm').addEventListener('submit', async event => {
   event.preventDefault();
   if (!db) return;
@@ -1569,8 +1709,15 @@ if (!window.supabase) {
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   db.auth.getSession().then(async ({data, error}) => {
     if (error) throw error;
-    if (data.session) await enterApp(data.session.user);
-    else showAuth();
+    if (data.session && invitationFlow) showInviteSetup(data.session.user.email);
+    else {
+      showAuth();
+      if (invitationFlow) {
+        showMessage(authNotice, 'This invitation link is invalid or has expired. Ask the person who invited you to send another invitation.', 'error');
+      } else if (data.session) {
+        await enterApp(data.session.user);
+      }
+    }
   }).catch(() => {
     showAuth();
     showMessage(authNotice, 'Could not restore your session. Please sign in again.', 'error');

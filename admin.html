@@ -26,6 +26,10 @@
       <div class="auth-story"><span class="eyebrow">The Loom7 studio</span><h1>A considered collection.<br>A connected community.</h1><p>A quiet space to care for your collection and the people who follow it.</p><span class="story-foot">CRAFTED WITH INTENTION · MANAGED WITH CARE</span></div>
       <div class="auth-form"><span class="eyebrow">For the people behind Loom7</span><h2>Welcome back.</h2><p class="muted">Sign in with your authorized admin account.</p><div id="authNotice" class="notice hidden" role="status" aria-live="polite"></div><form id="loginForm"><div class="field"><label for="email">Email address</label><input id="email" type="email" required autocomplete="username" placeholder="Your admin email"></div><div class="field"><label for="password">Password</label><div class="password-field"><input id="password" type="password" required autocomplete="current-password"><button id="togglePassword" class="password-toggle" type="button" aria-controls="password" aria-pressed="false">Show</button></div></div><button id="loginButton" class="btn primary" type="submit">Enter the studio <span aria-hidden="true">→</span></button></form><p class="auth-note">Private workspace. Authorized accounts only.</p></div>
     </section>
+    <section id="inviteSetup" class="auth hidden" aria-labelledby="inviteSetupHeading">
+      <div class="auth-story"><span class="eyebrow">A place in the studio</span><h1>Welcome to Loom7.</h1><p>Choose a password to finish setting up your admin access.</p><span class="story-foot">CRAFTED WITH INTENTION · MANAGED WITH CARE</span></div>
+      <div class="auth-form"><span class="eyebrow">Admin invitation</span><h2 id="inviteSetupHeading">Set your password.</h2><p id="inviteSetupEmail" class="muted"></p><div id="inviteSetupNotice" class="notice hidden" role="status" aria-live="polite"></div><form id="inviteSetupForm"><div class="field"><label for="invitePassword">Password</label><input id="invitePassword" type="password" minlength="12" required autocomplete="new-password" aria-describedby="invitePasswordHint"><span id="invitePasswordHint" class="field-hint">Use at least 12 characters.</span></div><div class="field"><label for="invitePasswordConfirm">Confirm password</label><input id="invitePasswordConfirm" type="password" minlength="12" required autocomplete="new-password"></div><button id="inviteSetupButton" class="btn primary" type="submit">Set password <span aria-hidden="true">→</span></button></form><p class="auth-note">Use a unique password you do not use on other sites.</p></div>
+    </section>
     <section id="app" class="hidden">
       <div class="workspace-main">
           <div class="heading"><div><span class="eyebrow">Your workspace</span><h1 id="workspaceTitle">The studio.</h1><p id="workspaceDescription">Keep your collection current. Stay close to your community.</p></div><span class="workspace-label">LOOM7 / ADMINISTRATION</span></div>
@@ -98,6 +102,20 @@
             <button id="aboutSave" class="btn primary" type="submit">Save About Section</button>
           </fieldset>
         </form>
+      </section>
+      <section id="adminAccessPanel" class="panel hidden" aria-labelledby="adminAccessTab">
+        <span class="eyebrow">Workspace access</span><h2>Admin accounts</h2>
+        <p class="panel-intro">Invite people you trust. Every admin can manage the full workspace, including products and subscribers.</p>
+        <div id="adminAccessNotice" class="notice hidden" role="status" aria-live="polite"></div>
+        <form id="adminInviteForm">
+          <fieldset id="adminInviteFields">
+            <div class="field"><label for="adminInviteEmail">Email address</label><input id="adminInviteEmail" type="email" maxlength="320" required autocomplete="email" placeholder="person@example.com"></div>
+            <button id="adminInviteButton" class="btn primary" type="submit">Send admin invitation</button>
+          </fieldset>
+        </form>
+        <p class="field-hint admin-access-hint">They will receive an email invitation and choose their own password. Removing access does not delete their Loom7 account.</p>
+        <div class="panel-heading admin-access-heading"><h3>Current admins</h3><button id="adminAccessRetry" class="btn" type="button">Refresh list</button></div>
+        <div id="adminAccessList" class="table-wrap admin-access-list" aria-live="polite"><p class="muted">Admin accounts will load when you open this section.</p></div>
       </section>
         <footer class="workspace-footer">LOOM7 STUDIO <span>Made for thoughtful work.</span></footer>
       </div>
